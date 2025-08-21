@@ -9,8 +9,8 @@ public class Player : MonoBehaviour {
 
   [System.Serializable]
   public class Music {
-    public AudioSource theme;
-    public AudioSource play;
+    public AudioSource Theme;
+    public AudioSource Game;
   }
 
 
@@ -25,6 +25,8 @@ public class Player : MonoBehaviour {
   [Header("Audio")]
   [SerializeField] private Music music;
   [SerializeField] private Sounds sounds;
+
+  private GameController gameController;
 
   #endregion
 
@@ -48,9 +50,22 @@ public class Player : MonoBehaviour {
 
   #region Handlers
 
+  private void HandleGameReady() {
+    music.Theme.Play();
+  }
+
   #endregion
 
   #region Lifecycle
+
+  private void Start() {
+    if (gameController.IsReady) HandleGameReady();
+    else gameController.OnReady.AddListener(HandleGameReady);
+  }
+
+  private void Awake() {
+    gameController = GameController.Instance;
+  }
 
   #endregion
 }

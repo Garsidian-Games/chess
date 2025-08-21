@@ -1,7 +1,7 @@
 using UnityEngine;
+using UnityEngine.Events;
 
 [RequireComponent(typeof(AudioManager))]
-[RequireComponent(typeof(GameManager))]
 public class GameController : MonoBehaviour {
   #region Constants
 
@@ -13,9 +13,13 @@ public class GameController : MonoBehaviour {
 
   #region Fields
 
+  private UIController uiController;
+
   #endregion
 
   #region Events
+
+  [HideInInspector] public UnityEvent OnReady;
 
   #endregion
 
@@ -23,13 +27,21 @@ public class GameController : MonoBehaviour {
 
   public static GameController Instance => GameObject.FindWithTag("GameController").GetComponent<GameController>();
 
-  public AudioManager AudioManager { get; private set; }
+  public bool IsReady { get; private set; }
 
-  public GameManager GameManager { get; private set; }
+  public AudioManager AudioManager { get; private set; }
 
   #endregion
 
   #region Methods
+
+  private void ReadyUp() {
+    if (IsReady) return;
+    if (!uiController.IsReady) return;
+
+    IsReady = true;
+    OnReady.Invoke();
+  }
 
   #endregion
 
@@ -39,13 +51,21 @@ public class GameController : MonoBehaviour {
 
   #region Handlers
 
+  private void HandleUIReady() => ReadyUp();
+
   #endregion
 
   #region Lifecycle
 
+  private void Start() {
+    if (uiController.IsReady) HandleUIReady();
+    else uiController.OnReady.AddListener(HandleUIReady);
+  }
+
   private void Awake() {
     AudioManager = GetComponent<AudioManager>();
-    GameManager = GetComponent<GameManager>();
+
+    uiController = UIController.Instance;
   }
 
   #endregion

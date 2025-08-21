@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Events;
 
 public class UIController : MonoBehaviour {
   #region Constants
@@ -14,17 +15,31 @@ public class UIController : MonoBehaviour {
   [Header("References")]
   [SerializeField] private GameObject loadingScreen;
 
+  private GameController gameController;
+
   #endregion
 
   #region Events
+
+  [HideInInspector] public UnityEvent OnReady;
 
   #endregion
 
   #region Properties
 
+  public static UIController Instance => GameObject.FindWithTag("UIController").GetComponent<UIController>();
+
+  public bool IsReady { get; private set; }
+
   #endregion
 
   #region Methods
+
+  private void ReadyUp() {
+    if (IsReady) return;
+    IsReady = true;
+    OnReady.Invoke();
+  }
 
   #endregion
 
@@ -34,12 +49,23 @@ public class UIController : MonoBehaviour {
 
   #region Handlers
 
+  private void HandleGameReady() {
+    loadingScreen.SetActive(false);
+  }
+
   #endregion
 
   #region Lifecycle
 
+  private void Start() {
+    if (gameController.IsReady) HandleGameReady();
+    else gameController.OnReady.AddListener(HandleGameReady);
+  }
+
   private void Awake() {
     loadingScreen.SetActive(true);
+
+    gameController = GameController.Instance;
   }
 
   #endregion
