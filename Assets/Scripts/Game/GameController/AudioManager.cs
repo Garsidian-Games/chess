@@ -1,5 +1,8 @@
 using UnityEngine;
 using UnityEngine.Audio;
+using UnityEngine.Events;
+using System.Collections;
+using System.Collections.Generic;
 
 public class AudioManager : MonoBehaviour {
   #region Constants
@@ -10,80 +13,84 @@ public class AudioManager : MonoBehaviour {
 
   #endregion
 
+  #region Internal
+
+  #endregion
+
   #region Fields
 
   [Header("References")]
   [SerializeField] private AudioMixer audioMixer;
+  [SerializeField] private AudioSource musicPlayer;
+  [SerializeField] private AudioSource soundPlayer;
 
   [Header("Settings")]
-  [SerializeField] private string paramMusicVolume = "MusicVolume";
-  [SerializeField] private string paramSoundVolume = "SoundVolume";
-  [SerializeField] [Range(0f, 1f)] private float defaultVolume = 0.5f;
+  [SerializeField] private AudioChannel music;
+  [SerializeField] private AudioChannel sound;
 
-  private float? lastMusicVolume;
-  private float? lastSoundVolume;
+  private readonly Queue<AudioSource> soundsIdle = new();
+
+  #endregion
+
+  #region Events
 
   #endregion
 
   #region Properties
 
-  public bool MusicMuted => GetVolume(paramMusicVolume) == 0f;
-
-  public float MusicVolume {
-    get => GetVolume(paramMusicVolume);
-    set => SetVolume(paramMusicVolume, value);
+  public bool MusicMuted {
+    get => music.IsMuted;
+    set => music.IsMuted = value;
   }
 
-  public bool SoundMuted => GetVolume(paramSoundVolume) == 0f;
+  public float MusicVolume {
+    get => music.Volume;
+    set => music.Volume = value;
+  }
+
+  public bool SoundMuted {
+    get => sound.IsMuted;
+    set => sound.IsMuted = value;
+  }
 
   public float SoundVolume {
-    get => GetVolume(paramSoundVolume);
-    set => SetVolume(paramSoundVolume, value);
+    get => sound.Volume;
+    set => sound.Volume = value;
   }
 
   #endregion
 
   #region Methods
 
-  public bool ToggleMusic() => Toggle(paramMusicVolume, ref lastMusicVolume);
-
-  public bool ToggleSound() => Toggle(paramSoundVolume, ref lastSoundVolume);
-
-  private bool Toggle(string param, ref float? last) {
-    var volume = GetVolume(param);
-    if (volume < Threshold) {
-      SetVolume(param, last ?? defaultVolume);
-      last = null;
-      return true;
-    } else {
-      last = volume;
-      SetVolume(param, 0f);
-      return false;
-    }
+  public void PlayMusic(AudioResource resource) {
+    musicPlayer.Stop();
+    musicPlayer.resource = resource;
+    musicPlayer.Play();
   }
 
-  private void SetVolume(string param, float volume) {
-    volume = Mathf.Clamp01(volume);
-    ApplyVolume(param, volume);
-    PlayerPrefs.SetFloat(param, volume);
+  public void PlaySound(AudioResource resource) {
+    AudioSource source = soundsIdle.Count > 0 ? soundsIdle.Dequeue() : Instantiate(soundPlayer, transform).GetComponent<AudioSource>();
+    StartCoroutine(PlaySoundOn(resource, source));
   }
 
-  private void ApplyVolume(string param, float volume) {
-    audioMixer.SetFloat(param, (volume <= Threshold) ? MinDb : Mathf.Log10(volume) * 20f);
-  }
+  #endregion
 
-  private float GetVolume(string key) {
-    if (!PlayerPrefs.HasKey(key)) PlayerPrefs.SetFloat(key, defaultVolume);
-    return Mathf.Clamp01(PlayerPrefs.GetFloat(key));
-  }
+  #region Coroutines
+
+  private IEnumerator PlaySoundOn(AudioResource resource, AudioSource source) {
+    source.resource = resource;
+    source.Play();
+    while (source.isPlaying) yield return 0f;
+    soundsIdle.Enqueue(source);
+  } 
 
   #endregion
 
   #region Lifecycle
 
   private void Start() {
-    ApplyVolume(paramSoundVolume, GetVolume(paramSoundVolume));
-    ApplyVolume(paramMusicVolume, GetVolume(paramMusicVolume));
+    music.Initialize();
+    sound.Initialize();
   }
 
   #endregion

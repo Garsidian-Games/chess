@@ -60,6 +60,8 @@ public class UIController : MonoBehaviour {
   private void Start() {
     if (gameController.IsReady) HandleGameReady();
     else gameController.OnReady.AddListener(HandleGameReady);
+
+    ReadyUp();
   }
 
   private void Awake() {
