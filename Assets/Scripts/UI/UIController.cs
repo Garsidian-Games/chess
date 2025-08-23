@@ -13,6 +13,7 @@ public class UIController : MonoBehaviour {
   #region Fields
 
   [Header("References")]
+  [SerializeField] private Board board;
   [SerializeField] private GameObject loadingScreen;
 
   private GameController gameController;
@@ -37,6 +38,8 @@ public class UIController : MonoBehaviour {
 
   private void ReadyUp() {
     if (IsReady) return;
+    if (!board.IsReady) return;
+
     IsReady = true;
     OnReady.Invoke();
   }
@@ -61,7 +64,8 @@ public class UIController : MonoBehaviour {
     if (gameController.IsReady) HandleGameReady();
     else gameController.OnReady.AddListener(HandleGameReady);
 
-    ReadyUp();
+    if (board.IsReady) ReadyUp();
+    else board.OnReady.AddListener(ReadyUp);
   }
 
   private void Awake() {
