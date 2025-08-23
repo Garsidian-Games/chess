@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Audio;
 using UnityEngine.Events;
 
 public class Player : MonoBehaviour {
@@ -12,8 +13,8 @@ public class Player : MonoBehaviour {
 
   [System.Serializable]
   public class Music {
-    public AudioSource Theme;
-    public AudioSource Game;
+    public AudioResource Theme;
+    public AudioResource Game;
   }
 
   #endregion
@@ -68,7 +69,7 @@ public class Player : MonoBehaviour {
   #region Handlers
 
   private void HandleGameReady() {
-    music.Theme.Play();
+    gameController.AudioManager.PlayMusic(music.Theme);
   }
 
   #endregion

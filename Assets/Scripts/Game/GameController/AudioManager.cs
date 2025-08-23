@@ -28,7 +28,8 @@ public class AudioManager : MonoBehaviour {
   [SerializeField] private AudioChannel music;
   [SerializeField] private AudioChannel sound;
 
-  private readonly Queue<AudioSource> soundsIdle = new();
+  private readonly List<AudioResource> playing = new();
+  private readonly Queue<AudioSource> idle = new();
 
   #endregion
 
@@ -68,20 +69,23 @@ public class AudioManager : MonoBehaviour {
     musicPlayer.Play();
   }
 
-  public void PlaySound(AudioResource resource) {
-    AudioSource source = soundsIdle.Count > 0 ? soundsIdle.Dequeue() : Instantiate(soundPlayer, transform).GetComponent<AudioSource>();
-    StartCoroutine(PlaySoundOn(resource, source));
+  public void PlaySound(AudioResource resource, bool unique = false) {
+    if (unique && playing.Contains(resource)) return;
+    AudioSource source = idle.Count > 0 ? idle.Dequeue() : Instantiate(soundPlayer, transform).GetComponent<AudioSource>();
+    StartCoroutine(PlaySoundOn(resource, source, unique));
   }
 
   #endregion
 
   #region Coroutines
 
-  private IEnumerator PlaySoundOn(AudioResource resource, AudioSource source) {
+  private IEnumerator PlaySoundOn(AudioResource resource, AudioSource source, bool unique) {
+    if (unique) playing.Add(resource);
     source.resource = resource;
     source.Play();
     while (source.isPlaying) yield return 0f;
-    soundsIdle.Enqueue(source);
+    idle.Enqueue(source);
+    if (unique) playing.Remove(resource);
   } 
 
   #endregion
