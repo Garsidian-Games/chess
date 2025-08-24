@@ -65,7 +65,7 @@ public class Board : MonoBehaviour {
   #region Methods
 
   public void Render(GameState gameState) {
-    foreach (var square in squares) square.Piece = gameState[square];
+    foreach (var square in squares) square.Piece = gameState.BoardState[square];
   }
 
   private void Add(Square square) {

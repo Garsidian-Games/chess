@@ -17,6 +17,7 @@ public class Side : ScriptableObject {
   [SerializeField] [Range(-1, 1)] private int pawnMoveDirection;
   [SerializeField] [Range(0, 7)] private int homeRank;
   [SerializeField] [Range(0, 7)] private int pawnRank;
+  [SerializeField] [Range(0, 7)] private int promotionRank;
 
   [Header("Pieces")]
   [SerializeField] private Piece pawn;
@@ -41,6 +42,8 @@ public class Side : ScriptableObject {
   public int HomeRank => homeRank;
 
   public int PawnRank => pawnRank;
+
+  public int PromotionRank => promotionRank;
 
   public Piece Pawn => pawn;
 

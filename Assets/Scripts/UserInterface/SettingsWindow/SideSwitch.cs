@@ -45,7 +45,7 @@ public class SideSwitch : MonoBehaviour {
 
   private void TryChangeSide(SideType sideType) {
     buffered = sideType;
-    if (gameController.GameManager.GameState.IsFresh) {
+    if (gameController.GameManager.GameState.BoardState.IsRoot) {
       player.Side = buffered.Value;
       buffered = null;
     } else OnConfirmationRequired.Invoke();

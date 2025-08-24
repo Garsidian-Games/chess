@@ -4,13 +4,13 @@ using System.Collections.Generic;
 public sealed class Coverage : IEquatable<Coverage> {
   #region Properties
 
-  public readonly Piece Source;
+  public readonly Piece Piece;
+
+  public readonly Piece Other;
 
   public readonly Square From;
 
   public readonly Square To;
-
-  public readonly Piece Subject;
 
   #endregion
 
@@ -26,8 +26,8 @@ public sealed class Coverage : IEquatable<Coverage> {
     if (other is null) return false;
     if (ReferenceEquals(this, other)) return true;
     if (_hash != other._hash) return false;
-    return EqualityComparer<Piece>.Default.Equals(Source, other.Source)
-        && EqualityComparer<Piece>.Default.Equals(Subject, other.Subject)
+    return EqualityComparer<Piece>.Default.Equals(Piece, other.Piece)
+        && EqualityComparer<Piece>.Default.Equals(Other, other.Other)
         && EqualityComparer<Square>.Default.Equals(From, other.From)
         && EqualityComparer<Square>.Default.Equals(To, other.To);
   }
@@ -43,18 +43,18 @@ public sealed class Coverage : IEquatable<Coverage> {
   }
   public static bool operator !=(Coverage left, Coverage right) => !(left == right);
 
-  public override string ToString() => string.Format("Coverage(Source={0} From={1} To={2} Subject={3})", Source, From, To, Subject);
+  public override string ToString() => string.Format("Coverage(Piece={0} From={1} To={2} Other={3})", Piece, From, To, Other);
 
   #endregion
 
   #region Constructor
 
-  public Coverage(Piece source, Square from, Square to, Piece subject = null) {
-    Source = source;
+  public Coverage(Piece piece, Square from, Square to, Piece other = null) {
+    Piece = piece;
     From = from;
     To = to;
-    Subject = subject;
-    _hash = HashCode.Combine(source, from, to, subject);
+    Other = other;
+    _hash = HashCode.Combine(piece, from, to, other);
   }
 
   #endregion

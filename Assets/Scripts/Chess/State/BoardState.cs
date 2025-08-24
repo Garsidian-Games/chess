@@ -11,13 +11,25 @@ public sealed class BoardState {
 
   private readonly Side black;
 
-  private readonly Dictionary<Square, Piece> state = new();
+  private readonly Dictionary<Square, Piece> state;
+
+  private readonly Dictionary<Move, Dictionary<PieceType, BoardState>> cache = new();
+
+  private CoverageMap coverageMap;
 
   #endregion
 
   #region Properties
 
-  public SideType SideToMove { get; private set; }
+  public readonly SideType SideToMove;
+
+  public readonly BoardState Previous;
+
+  public readonly Move Move;
+
+  public readonly PieceType Promotion;
+
+  public bool IsRoot => Previous == null;
 
   public Square[] Squares => board.Squares;
 
@@ -27,9 +39,16 @@ public sealed class BoardState {
 
   public Piece this[Square square] => IsPieceOn(square) ? state[square] : null;
 
-  private Side SideFor(Piece piece) => SideFor(piece.SideType);
+  public Side SideFor(Piece piece) => SideFor(piece.SideType);
 
-  private Side SideFor(SideType sideType) => sideType == SideType.White ? white : black;
+  public Side SideFor(SideType sideType) => sideType == SideType.White ? white : black;
+
+  public CoverageMap CoverageMap {
+    get {
+      if (coverageMap == null) coverageMap = new(this);
+      return coverageMap;
+    }
+  }
 
   #endregion
 
@@ -51,7 +70,22 @@ public sealed class BoardState {
     return count;
   }
 
+  public bool IsDirty(Square square) {
+    var boardState = this;
+    while (!boardState.IsRoot) {
+      if (boardState.Move.From == square || boardState.Move.To == square) return true;
+      boardState = boardState.Previous;
+    }
+    return false;
+  }
+
   public bool IsPieceOn(Square square) => state.ContainsKey(square);
+
+  public BoardState After(Move move, PieceType promotion) {
+    if (!cache.ContainsKey(move)) cache[move] = new();
+    if (!cache[move].ContainsKey(promotion)) cache[move][promotion] = new(this, move, promotion);
+    return cache[move][promotion];
+  }
 
   private static bool IsMatch(Piece piece, SideType sideType, PieceType pieceType) {
     if (piece == null) return false;
@@ -85,6 +119,10 @@ public sealed class BoardState {
 
     SideToMove = boardState.SideToMove == SideType.White ? SideType.Black : SideType.White;
 
+    Previous = boardState;
+    Move = move;
+    Promotion = promotion;
+
     board = boardState.board;
     white = boardState.white;
     black = boardState.black;
@@ -113,6 +151,8 @@ public sealed class BoardState {
     this.board = board;
     this.white = white;
     this.black = black;
+
+    state = new();
 
     Setup(white);
     Setup(black);

@@ -2,6 +2,12 @@ using UnityEngine;
 
 [CreateAssetMenu(fileName = "Piece", menuName = "Game/Piece")]
 public class Piece : ScriptableObject {
+  #region Constants
+
+  public static PieceType[] PromotionTypes = new PieceType[] { PieceType.Queen, PieceType.Knight, PieceType.Rook, PieceType.Bishop };
+
+  #endregion
+
   #region Fields
 
   [SerializeField] private SideType sideType;
@@ -31,6 +37,8 @@ public class Piece : ScriptableObject {
   public bool IsBishop => PieceType == PieceType.Bishop;
   public bool IsQueen => PieceType == PieceType.Queen;
   public bool IsKing => PieceType == PieceType.King;
+  public bool IsWhite => SideType == SideType.White;
+  public bool IsBlack => SideType == SideType.Black;
 
   #endregion
 

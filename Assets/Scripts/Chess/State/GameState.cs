@@ -14,13 +14,9 @@ public sealed class GameState {
 
   #region Fields
 
-  private readonly BoardState boardState;
-
-  private readonly PieceType promotion;
+  private readonly MoveSet moveSet;
 
   private string _string;
-
-  private readonly Dictionary<Move, Dictionary<PieceType, GameState>> cache = new();
 
   #endregion
 
@@ -30,61 +26,47 @@ public sealed class GameState {
 
   #region Properties
 
-  public bool IsFresh => Move == null;
+  public readonly BoardState BoardState;
 
-  public Piece this[Square square] => boardState[square];
-
-  public SideType SideToMove => boardState.SideToMove;
-
-  public Move[] LegalMoves { get; private set; }
-
-  public bool IsMate { get; private set; }
-
-  public bool InCheck { get; private set; }
+  public Move[] Moves => moveSet.Moves;
 
   #endregion
 
   #region Methods
 
-  public readonly Move Move;
-
-  public readonly GameState Previous;
-
-  public GameState For(Move move, PieceType promotion = PieceType.None) {
-    if (!cache.ContainsKey(move)) cache[move] = new();
-    if (!cache[move].ContainsKey(promotion)) cache[move][promotion] = new(this, move, promotion);
-    return cache[move][promotion];
-  }
+  public GameState Make(Move move, PieceType promotion = PieceType.None) => new(BoardState.After(move, promotion));
 
   public override string ToString() {
-    if (IsFresh) return string.Empty;
+    if (BoardState.IsRoot) return string.Empty;
 
-    if (Move.IsCastleKS) return "O-O";
-    if (Move.IsCastleQS) return "O-O-O";
+    if (BoardState.Move.IsCastleKS) return "O-O";
+    if (BoardState.Move.IsCastleQS) return "O-O-O";
 
     if (string.IsNullOrEmpty(_string)) {
       StringBuilder stringBuilder = new();
 
-      stringBuilder.Append(Move.Piece.Char);
+      stringBuilder.Append(BoardState.Move.Piece.Char);
 
-      var movesToSquare = LegalMoves.Where(move => move.To == Move.To);
+      var movesToSquare = moveSet.Moves.Where(move => move.To == BoardState.Move.To);
       if (movesToSquare.Count() > 1) {
-        if (boardState.PiecesOnFile(Move.From.File, Move.Piece.SideType, Move.Piece.PieceType) == 0) stringBuilder.Append(Move.From.FileChar);
-        else if (boardState.PiecesOnRank(Move.From.Rank, Move.Piece.SideType, Move.Piece.PieceType) == 0) stringBuilder.Append(Move.From.Rank);
-        else stringBuilder.Append(Move.From.name);
+        if (BoardState.PiecesOnFile(BoardState.Move.From.File, BoardState.Move.Piece.SideType, BoardState.Move.Piece.PieceType) == 0)
+          stringBuilder.Append(BoardState.Move.From.FileChar);
+        else if (BoardState.PiecesOnRank(BoardState.Move.From.Rank, BoardState.Move.Piece.SideType, BoardState.Move.Piece.PieceType) == 0)
+          stringBuilder.Append(BoardState.Move.From.Rank);
+        else stringBuilder.Append(BoardState.Move.From.name);
       }
 
-      if (Move.IsCapture) {
-        if (Move.Piece.IsPawn) stringBuilder.Append(Move.From.FileChar);
+      if (BoardState.Move.IsCapture) {
+        if (BoardState.Move.Piece.IsPawn) stringBuilder.Append(BoardState.Move.From.FileChar);
         stringBuilder.Append('x');
       }
 
-      stringBuilder.Append(Move.To.name);
+      stringBuilder.Append(BoardState.Move.To.name);
 
-      if (Move.IsPromotion) stringBuilder.Append($"={Piece.CharFor(promotion)}");
+      if (BoardState.Move.IsPromotion) stringBuilder.Append($"={Piece.CharFor(BoardState.Promotion)}");
 
-      if (IsMate) stringBuilder.Append("#");
-      else if (InCheck) stringBuilder.Append("+");
+      if (moveSet.IsMate) stringBuilder.Append("#");
+      else if (BoardState.CoverageMap.InCheck(BoardState.SideToMove)) stringBuilder.Append("+");
 
       _string = stringBuilder.ToString();
     }
@@ -104,15 +86,14 @@ public sealed class GameState {
 
   #region Constructor
 
-  public GameState(GameState gameState, Move move, PieceType promotion) {
-    Move = move;
-    Previous = gameState;
-    this.promotion = promotion;
-    boardState = new(gameState.boardState, move, promotion);
+  public GameState(BoardState boardState) {
+    BoardState = boardState;
+    moveSet = new(BoardState);
   }
 
-  public GameState(BoardState boardState) {
-    this.boardState = boardState;
+  public GameState(Board board, Side white, Side black) {
+    BoardState = new(board, white, black);
+    moveSet = new(BoardState);
   }
 
   #endregion

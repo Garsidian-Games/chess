@@ -39,7 +39,7 @@ public class GameManager : MonoBehaviour {
   #region Methods
 
   public void Make(Move move, PieceType promotion = PieceType.None) {
-    GameState = new(GameState, move, promotion);
+    GameState = GameState.Make(move, promotion);
     OnMoved.Invoke(move);
   }
 
@@ -47,7 +47,7 @@ public class GameManager : MonoBehaviour {
     if (IsReady) return;
     if (!uiController.IsReady) return;
 
-    GameState = new(new(uiController.Board, white, black));
+    GameState = new(uiController.Board, white, black);
     uiController.Board.Render(GameState);
 
     IsReady = true;

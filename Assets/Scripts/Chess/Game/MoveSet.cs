@@ -6,17 +6,6 @@ using System.Linq;
 public sealed class MoveSet {
   #region Constants
 
-  private readonly static Vector2Int[] KingMovements = new Vector2Int[] {
-    new(-1, 1),  new(0, 1),  new(1, 1),
-    new(-1, 0),              new(1, 0),
-    new(-1, -1), new(0, -1), new(1, -1),
-  };
-
-  private readonly static Vector2Int[] KnightMovements = new Vector2Int[] {
-    new(1, 2), new(1, -2), new(-1, 2), new(-1, -2),
-    new(2, 1), new(2, -1), new(-2, 1), new(-2, -1),
-  };
-
   private readonly int[] CastleKingSideFiles = new[] { 5, 6 };
 
   private readonly int[] CastleQueenSideFiles = new[] { 2, 3 };
@@ -29,11 +18,11 @@ public sealed class MoveSet {
 
   #region Fields
 
+  private readonly Side sideToMove;
+
   private readonly BoardState boardState;
 
   private readonly HashSet<Move> moves = new();
-
-  private readonly HashSet<Coverage> coverages = new();
 
   #endregion
 
@@ -43,125 +32,128 @@ public sealed class MoveSet {
 
   #region Properties
 
+  public readonly bool IsMate;
+
   public Move[] Moves => moves.ToArray();
 
   #endregion
 
   #region Methods
 
-  private void AddMovesFrom(Square square) => AddMovesFrom(boardState[square], square);
-  private void AddMovesFrom(Piece piece, Square square) {
-    if (square == null) throw new System.ArgumentException("Square cannot be null!");
-    if (piece == null) return;
+  private void AddPawnMovesFrom(Square from) {
+    var piece = boardState[from];
+    if (piece == null || !piece.IsPawn) return;
 
-    switch (piece.PieceType) {
-      case PieceType.Pawn: AddPawnMovesFrom(piece, square); break;
-      case PieceType.Rook: AddRookMovesFrom(piece, square); break;
-      case PieceType.Knight: AddKnightMovesFrom(piece, square); break;
-      case PieceType.Bishop: AddBishopMovesFrom(piece, square); break;
-      case PieceType.Queen: AddQueenMovesFrom(piece, square); break;
-      case PieceType.King: AddKingMovesFrom(piece, square); break;
-    }
+    var side = boardState.SideFor(piece);
+
+    if (!AddPawnMove(piece, from, boardState[from.Rank + side.PawnMoveDirection, from.File])) return;
+    if (from.Rank != side.PawnRank) return;
+
+    AddPawnMove(piece, from, boardState[from.Rank + (side.PawnMoveDirection * 2), from.File], true);
   }
 
-  private void AddPawnMovesFrom(Piece piece, Square from) {
-    Assert.IsTrue(piece.IsPawn, string.Format("{0} is not a pawn!", piece));
-  }
-
-  private void AddRookMovesFrom(Piece piece, Square from) {
-    Assert.IsTrue(piece.IsRook, string.Format("{0} is not a rook!", piece));
-
-    AddMovementRayFrom(piece, from, 1, 0);
-    AddMovementRayFrom(piece, from, -1, 0);
-    AddMovementRayFrom(piece, from, 0, 1);
-    AddMovementRayFrom(piece, from, 0, -1);
-  }
-
-  private void AddKnightMovesFrom(Piece piece, Square from) {
-    Assert.IsTrue(piece.IsKnight, string.Format("{0} is not a knight!", piece));
-
-    foreach (var movement in KnightMovements)
-      TryAddMove(piece, from, boardState[from.Rank + movement.x, from.File + movement.y]);
-  }
-
-  private void AddBishopMovesFrom(Piece piece, Square from) {
-    Assert.IsTrue(piece.IsBishop, string.Format("{0} is not a bishop!", piece));
-
-    AddMovementRayFrom(piece, from, 1, 1);
-    AddMovementRayFrom(piece, from, 1, -1);
-    AddMovementRayFrom(piece, from, -1, 1);
-    AddMovementRayFrom(piece, from, -1, -1);
-  }
-
-  private void AddQueenMovesFrom(Piece piece, Square from) {
-    Assert.IsTrue(piece.IsQueen, string.Format("{0} is not a queen!", piece));
-
-    AddMovementRayFrom(piece, from, 1, 1);
-    AddMovementRayFrom(piece, from, 1, -1);
-    AddMovementRayFrom(piece, from, -1, 1);
-    AddMovementRayFrom(piece, from, -1, -1);
-    AddMovementRayFrom(piece, from, 1, 0);
-    AddMovementRayFrom(piece, from, -1, 0);
-    AddMovementRayFrom(piece, from, 0, 1);
-    AddMovementRayFrom(piece, from, 0, -1);
-  }
-
-  private void AddKingMovesFrom(Piece piece, Square from) {
-    Assert.IsTrue(piece.IsKing, string.Format("{0} is not a king!", piece));
-
-    foreach (var movement in KingMovements)
-      TryAddMove(piece, from, boardState[from.Rank + movement.x, from.File + movement.y]);
-  }
-
-  private void AddMovementRayFrom(Piece piece, Square from, int rankDirection, int fileDirection) {
-    for (int i = 1; i < Board.Dimension; i++) {
-      if (!TryAddMove(piece, from, boardState[from.Rank + i * rankDirection, from.File + i * fileDirection]))
-        break;
-    }
-  }
-
-  private bool TryAddMove(Piece piece, Square from, Square to) {
+  private bool AddPawnMove(Piece piece, Square from, Square to, bool doublePush = false) {
     if (to == null) return false;
 
     var other = boardState[to];
-    if (other == null) {
-      AddMove(piece, from, to);
-      return true;
-    }
+    if (other != null) return false;
 
-    if (piece.SideType == other.SideType) AddCoverage(piece, from, to, other);
-    else AddMove(piece, from, to, other);
-    return false;
+    var side = boardState.SideFor(piece);
+    Add(new(piece, from, to, doublePush ? MoveFlag.DoublePush : to.Rank == side.PromotionRank ? MoveFlag.Promotion : 0, to));
+    return true;
   }
 
-  private void AddMove(Piece piece, Square from, Square to, Piece captured) => AddMove(piece, from, to, to, captured);
-  private void AddMove(Piece piece, Square from, Square to, Square captures, Piece captured) {
-    moves.Add(new(piece, from, to, MoveFlag.Capture | (captured.PieceType == PieceType.King ? MoveFlag.GivesCheck : 0), captures));
-    AddCoverage(piece, from, to, captured);
+  private void TryAddEnPassant(Move move) {
+    if (move == null) return;
+    if (!move.IsDoublePush) return;
+
+    var pawn = move.Piece;
+    var side = boardState.SideFor(pawn);
+    var from = move.From;
+    var ends = move.To;
+    var thru = boardState[ends.Rank + (-1 * side.PawnMoveDirection), ends.File];
+    var hits = boardState.CoverageMap.Coverages.Where(coverage => coverage.To == thru && coverage.Piece.IsPawn && coverage.Piece.SideType != pawn.SideType);
+
+    foreach (var hit in hits) Add(new(hit.Piece, hit.From, hit.To, MoveFlag.Capture | MoveFlag.EnPassant, ends));
   }
 
-  private void AddMove(Piece piece, Square from, Square to) {
-    moves.Add(new(piece, from, to));
-    AddCoverage(piece, from, to);
+  private void TryAddQueenSideCastle(int rank) {
+    if (boardState.IsPieceOn(boardState[rank, 1])) return;
+    if (boardState.IsPieceOn(boardState[rank, 2])) return;
+    if (boardState.IsPieceOn(boardState[rank, 3])) return;
+    if (boardState.IsPieceOn(boardState[rank, 0])) return;
+
+    var kingSquare = boardState[rank, 4];
+    if (boardState.IsDirty(kingSquare)) return;
+
+    if (boardState.CoverageMap.Coverages.Any(c => c.Piece.SideType != sideToMove.SideType && c.To.Rank == rank && CastleQueenSideFiles.Contains(c.To.File)))
+      return;
+
+    Add(new(boardState[kingSquare], kingSquare, boardState[rank, 2], MoveFlag.CastleQueenSide));
   }
 
-  private void AddCoverage(Piece piece, Square from, Square to, Piece other = null) => coverages.Add(new(piece, from, to, other));
+  private void TryAddKingSideCastle(int rank) {
+    if (boardState.IsPieceOn(boardState[rank, 5])) return;
+    if (boardState.IsPieceOn(boardState[rank, 6])) return;
+    if (boardState.IsDirty(boardState[rank, 7])) return;
 
-  #endregion
+    var kingSquare = boardState[rank, 4];
+    if (boardState.IsDirty(kingSquare)) return;
 
-  #region Coroutines
+    if (boardState.CoverageMap.Coverages.Any(c => c.Piece.SideType != sideToMove.SideType && c.To.Rank == rank && CastleKingSideFiles.Contains(c.To.File)))
+      return;
 
-  #endregion
+    Add(new(boardState[kingSquare], kingSquare, boardState[rank, 6], MoveFlag.CastleQueenSide));
+  }
 
-  #region Handlers
+  private Move For(Coverage coverage) {
+    if (coverage.Other == null) return new Move(coverage.Piece, coverage.From, coverage.To);
+    var side = boardState.SideFor(coverage.Piece);
+    return new Move(
+      coverage.Piece,
+      coverage.From,
+      coverage.To,
+      MoveFlag.Capture |
+        (coverage.Other.IsKing ? MoveFlag.GivesCheck : 0) |
+        (coverage.Piece.IsPawn && coverage.To.Rank == side.PromotionRank ? MoveFlag.Promotion : 0),
+      coverage.To
+    );
+  }
+
+  private void Add(Move move) {
+    var next = boardState.After(move, move.IsPromotion ? Piece.PromotionTypes[0] : PieceType.None);
+    if (next.CoverageMap.InCheck(sideToMove.SideType)) return;
+    moves.Add(move);
+  }
 
   #endregion
 
   #region Constructor
 
   public MoveSet(BoardState boardState) {
+    sideToMove = boardState.SideFor(boardState.SideToMove);
     this.boardState = boardState;
-    foreach (var square in boardState.Squares) AddMovesFrom(square);
+
+    foreach (var coverage in boardState.CoverageMap.Coverages) {
+      if (coverage.Piece.SideType != sideToMove.SideType) continue;
+      if (coverage.Piece.IsPawn) {
+        if (coverage.Other == null) continue;
+        if (coverage.Other.SideType == sideToMove.SideType) continue;
+      } else if (coverage.Other != null && coverage.Other.SideType == sideToMove.SideType) continue;
+
+      Add(For(coverage));
+    }
+
+    foreach (var square in boardState.Squares) AddPawnMovesFrom(square);
+
+    TryAddEnPassant(boardState.Move);
+
+    if (!boardState.CoverageMap.InCheck(sideToMove.SideType)) {
+      TryAddKingSideCastle(sideToMove.HomeRank);
+      TryAddQueenSideCastle(sideToMove.HomeRank);
+    }
+
+    IsMate = moves.Count == 0;
   }
 
   #endregion
