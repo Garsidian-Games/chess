@@ -9,7 +9,7 @@ public class Player : MonoBehaviour {
 
   #region Internal
 
-  [System.Serializable] public class SideEvent : UnityEvent<Side> { }
+  [System.Serializable] public class SideEvent : UnityEvent<SideType> { }
 
   [System.Serializable]
   public class Music {
@@ -27,7 +27,7 @@ public class Player : MonoBehaviour {
   [Header("Settings")]
   [SerializeField] private string prefPlayAsBlack = "PlayAsBlack";
 
-  private Side side;
+  private SideType side;
 
   private GameController gameController;
   private UIController uiController;
@@ -44,13 +44,13 @@ public class Player : MonoBehaviour {
 
   public static Player Instance => GameObject.FindWithTag("Player").GetComponent<Player>();
 
-  public Side Side {
+  public SideType Side {
     get => side;
     set {
       if (side == value) return;
 
       side = value;
-      if (side == Side.Black) PlayerPrefs.SetInt(prefPlayAsBlack, 1);
+      if (side == SideType.Black) PlayerPrefs.SetInt(prefPlayAsBlack, 1);
       else PlayerPrefs.DeleteKey(prefPlayAsBlack);
 
       OnSideChanged.Invoke(side);
@@ -127,7 +127,7 @@ public class Player : MonoBehaviour {
     gameController = GameController.Instance;
     uiController = UIController.Instance;
 
-    Side = PlayerPrefs.HasKey(prefPlayAsBlack) ? Side.Black : Side.White;
+    Side = PlayerPrefs.HasKey(prefPlayAsBlack) ? SideType.Black : SideType.White;
   }
 
   #endregion

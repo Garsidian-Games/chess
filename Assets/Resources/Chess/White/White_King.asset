@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab759ff126fc048b1b1f7402a66e52d5, type: 3}
+  m_Name: White_King
+  m_EditorClassIdentifier: 
+  side: 0
+  pieceType: 6
+  icon: {fileID: 21300000, guid: 69c43e214ae8f4b1aa73a999ee4361ef, type: 3}
+  border: {fileID: 21300000, guid: 5aad9649906654925956633f28bee8f3, type: 3}

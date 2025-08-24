@@ -62,6 +62,10 @@ public class Board : MonoBehaviour {
 
   #region Methods
 
+  public void Render(GameState gameState) {
+    foreach (var square in squares) square.Piece = gameState[square];
+  }
+
   private void Add(Square square) {
     square.OnClicked.AddListener(OnSquareClicked.Invoke);
     square.OnDragBegan.AddListener(OnSquareDragBegan.Invoke);

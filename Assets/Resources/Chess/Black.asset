@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c49807c0d6c244bb4a72f58125b1551b, type: 3}
+  m_Name: Black
+  m_EditorClassIdentifier: 
+  sideType: 1
+  pawnMoveDirection: -1
+  homeRank: 7
+  pawnRank: 6
+  pawn: {fileID: 11400000, guid: b123ce5b4b9fd4de9b3942b926fa9805, type: 2}
+  rook: {fileID: 11400000, guid: 8dba86f3402ff465aaf44df820396cac, type: 2}
+  knight: {fileID: 11400000, guid: d4f9f3ff9dcce4570a34101e458ae190, type: 2}
+  bishop: {fileID: 11400000, guid: c7dc0dbc1c0d64bf1bc70964a1470133, type: 2}
+  queen: {fileID: 11400000, guid: 0990bcd633db847fe879c781dbee4ae9, type: 2}
+  king: {fileID: 11400000, guid: 5959dd6b33dc84dc78cb2b256d594641, type: 2}

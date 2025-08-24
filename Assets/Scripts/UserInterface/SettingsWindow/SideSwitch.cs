@@ -30,9 +30,9 @@ public class SideSwitch : MonoBehaviour {
 
   #region Methods
 
-  private void Sync(Side side) {
-    white.gameObject.SetActive(side == Side.White);
-    black.gameObject.SetActive(side == Side.Black);
+  private void Sync(SideType side) {
+    white.gameObject.SetActive(side == SideType.White);
+    black.gameObject.SetActive(side == SideType.Black);
   }
 
   #endregion
@@ -43,9 +43,9 @@ public class SideSwitch : MonoBehaviour {
 
   #region Handlers
 
-  private void HandleWhiteClicked() => player.Side = Side.Black;
+  private void HandleWhiteClicked() => player.Side = SideType.Black;
 
-  private void HandleBlackClicked() => player.Side = Side.White;
+  private void HandleBlackClicked() => player.Side = SideType.White;
 
   #endregion
 

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public enum Side {
+public enum SideType {
   White,
   Black,
 }
