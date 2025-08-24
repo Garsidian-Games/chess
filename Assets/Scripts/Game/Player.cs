@@ -30,6 +30,7 @@ public class Player : MonoBehaviour {
   private Side side;
 
   private GameController gameController;
+  private UIController uiController;
 
   #endregion
 
@@ -72,6 +73,30 @@ public class Player : MonoBehaviour {
     gameController.AudioManager.PlayMusic(music.Theme);
   }
 
+  private void HandleSquareClicked(Square square) {
+    Debug.LogFormat("Clicked {0}", square);
+  }
+
+  private void HandleSquareDragBegan(Square square) {
+    Debug.LogFormat("Drag Began {0}", square);
+  }
+
+  private void HandleSquareDragEnded(Square square) {
+    Debug.LogFormat("Drag Ended {0}", square);
+  }
+
+  private void HandleSquareDropped(Square square) {
+    Debug.LogFormat("Dropped {0}", square);
+  }
+
+  private void HandleSquareEntered(Square square) {
+    Debug.LogFormat("Entered {0}", square);
+  }
+
+  private void HandleSquareExited(Square square) {
+    Debug.LogFormat("Exited {0}", square);
+  }
+
   #endregion
 
   #region Lifecycle
@@ -89,10 +114,18 @@ public class Player : MonoBehaviour {
   private void Start() {
     if (gameController.IsReady) HandleGameReady();
     else gameController.OnReady.AddListener(HandleGameReady);
+
+    uiController.Board.OnSquareClicked.AddListener(HandleSquareClicked);
+    uiController.Board.OnSquareDragBegan.AddListener(HandleSquareDragBegan);
+    uiController.Board.OnSquareDragEnded.AddListener(HandleSquareDragEnded);
+    uiController.Board.OnSquareDropped.AddListener(HandleSquareDropped);
+    uiController.Board.OnSquareEntered.AddListener(HandleSquareEntered);
+    uiController.Board.OnSquareExited.AddListener(HandleSquareExited);
   }
 
   private void Awake() {
     gameController = GameController.Instance;
+    uiController = UIController.Instance;
 
     Side = PlayerPrefs.HasKey(prefPlayAsBlack) ? Side.Black : Side.White;
   }

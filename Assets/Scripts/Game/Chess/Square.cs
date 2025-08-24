@@ -25,6 +25,12 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
     public Image player;
   }
 
+  [System.Serializable]
+  public class PieceDisplay {
+    public Image icon;
+    public Image border;
+  }
+
   #endregion
 
   #region Fields
@@ -32,7 +38,7 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
   [SerializeField] private Coverage coverage;
   [SerializeField] private Image highlight;
   [SerializeField] private Image border;
-  [SerializeField] private RectTransform container;
+  [SerializeField] private PieceDisplay pieceDisplay;
   [SerializeField] private Image screen;
 
   private Image image;
@@ -40,6 +46,11 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
   private int? index;
   private float? playerCoverageOpacity;
   private float? opponentCoverageOpacity;
+
+  private Sprite defaultPieceIcon;
+  private Sprite defaultPieceBorder;
+
+  private Piece piece;
 
   #endregion
 
@@ -57,8 +68,6 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
   #region Properties
 
   public float Weight => AxisWeight[Rank] * AxisWeight[File];
-
-  public RectTransform Container => container;
 
   public int Index {
     get {
@@ -106,6 +115,15 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
   public float PlayerCoverageOpacity {
     get => playerCoverageOpacity.Value;
     set => SetCoverageOpacity(ref playerCoverageOpacity, value, coverage.player);
+  }
+
+  public Piece Piece {
+    get => piece;
+    set {
+      piece = value;
+      pieceDisplay.icon.sprite = piece == null ? defaultPieceIcon : piece.Icon;
+      pieceDisplay.border.sprite = piece == null ? defaultPieceBorder : piece.Border;
+    }
   }
 
   #endregion
@@ -161,6 +179,8 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
 
   private void Awake() {
     image = GetComponent<Image>();
+    defaultPieceIcon = pieceDisplay.icon.sprite;
+    defaultPieceBorder = pieceDisplay.border.sprite;
   }
 
   #endregion

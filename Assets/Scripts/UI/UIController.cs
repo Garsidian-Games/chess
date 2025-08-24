@@ -32,6 +32,8 @@ public class UIController : MonoBehaviour {
 
   public bool IsReady { get; private set; }
 
+  public Board Board => board;
+
   #endregion
 
   #region Methods
