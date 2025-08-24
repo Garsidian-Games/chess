@@ -19,6 +19,12 @@ public sealed class BoardState {
 
   public SideType SideToMove { get; private set; }
 
+  public Square[] Squares => board.Squares;
+
+  public Square this[int index] => board[index];
+
+  public Square this[int rank, int file] => board[rank, file];
+
   public Piece this[Square square] => IsPieceOn(square) ? state[square] : null;
 
   private Side SideFor(Piece piece) => SideFor(piece.SideType);

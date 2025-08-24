@@ -7,9 +7,11 @@ using System.Collections.Generic;
 public class Board : MonoBehaviour {
   #region Constants
 
-  public const int Files = 8;
+  public const int Dimension = 8;
 
-  public const int Ranks = Files;
+  public const int Files = Dimension;
+
+  public const int Ranks = Dimension;
 
   public const int SquareCount = Files * Ranks;
 

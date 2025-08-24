@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 public class SideSwitch : MonoBehaviour {
@@ -18,9 +20,15 @@ public class SideSwitch : MonoBehaviour {
 
   private Player player;
 
+  private GameController gameController;
+
+  private SideType? buffered;
+
   #endregion
 
   #region Events
+
+  public UnityEvent OnConfirmationRequired;
 
   #endregion
 
@@ -30,9 +38,17 @@ public class SideSwitch : MonoBehaviour {
 
   #region Methods
 
-  private void Sync(SideType side) {
-    white.gameObject.SetActive(side == SideType.White);
-    black.gameObject.SetActive(side == SideType.Black);
+  private void Sync(SideType sideType) {
+    white.gameObject.SetActive(sideType == SideType.White);
+    black.gameObject.SetActive(sideType == SideType.Black);
+  }
+
+  private void TryChangeSide(SideType sideType) {
+    buffered = sideType;
+    if (gameController.GameManager.GameState.IsFresh) {
+      player.Side = buffered.Value;
+      buffered = null;
+    } else OnConfirmationRequired.Invoke();
   }
 
   #endregion
@@ -43,9 +59,15 @@ public class SideSwitch : MonoBehaviour {
 
   #region Handlers
 
-  private void HandleWhiteClicked() => player.Side = SideType.Black;
+  public void SwitchAndReset() {
+    player.Side = buffered.Value;
+    buffered = null;
+    SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+  }
 
-  private void HandleBlackClicked() => player.Side = SideType.White;
+  private void HandleWhiteClicked() => TryChangeSide(SideType.Black);
+
+  private void HandleBlackClicked() => TryChangeSide(SideType.White);
 
   #endregion
 
@@ -60,6 +82,7 @@ public class SideSwitch : MonoBehaviour {
 
   private void Awake() {
     player = Player.Instance;
+    gameController = GameController.Instance;
   }
 
   #endregion

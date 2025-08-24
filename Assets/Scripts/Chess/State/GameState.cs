@@ -30,6 +30,8 @@ public sealed class GameState {
 
   #region Properties
 
+  public bool IsFresh => Move == null;
+
   public Piece this[Square square] => boardState[square];
 
   public SideType SideToMove => boardState.SideToMove;
@@ -55,7 +57,7 @@ public sealed class GameState {
   }
 
   public override string ToString() {
-    if (Move == null) return string.Empty;
+    if (IsFresh) return string.Empty;
 
     if (Move.IsCastleKS) return "O-O";
     if (Move.IsCastleQS) return "O-O-O";
