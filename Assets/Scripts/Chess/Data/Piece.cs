@@ -51,7 +51,7 @@ public class Piece : ScriptableObject {
       PieceType.Bishop => 'B',
       PieceType.Queen => 'Q',
       PieceType.King => 'K',
-      _ => '\0',
+      _ => '.',
     };
   }
 

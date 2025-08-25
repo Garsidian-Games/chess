@@ -17,6 +17,8 @@ public sealed class GameState {
 
   private readonly MoveSet moveSet;
 
+  private readonly Dictionary<Move, Dictionary<PieceType, GameState>> cache = new();
+
   private string _string;
 
   #endregion
@@ -45,7 +47,11 @@ public sealed class GameState {
 
   public Move[] MovesFor(Piece piece, Square from) => moveSet.Moves.Where(move => move.Piece == piece && move.From == from).ToArray();
 
-  public GameState MakeMove(Move move, PieceType promotion = PieceType.None) => new(this, move, promotion);
+  public GameState MakeMove(Move move, PieceType promotion = PieceType.None) {
+    if (!cache.ContainsKey(move)) cache[move] = new();
+    if (!cache[move].ContainsKey(promotion)) cache[move][promotion] = new(this, move, promotion);
+    return cache[move][promotion];
+  }
 
   public override string ToString() {
     if (BoardState.IsRoot) return string.Empty;
@@ -56,28 +62,33 @@ public sealed class GameState {
     if (string.IsNullOrEmpty(_string)) {
       StringBuilder stringBuilder = new();
 
-      stringBuilder.Append(BoardState.Move.Piece.Char);
+      var move = BoardState.Move;
+      var piece = move.Piece;
+      var from = move.From;
+      var to = move.To;
 
-      var movesToSquare = moveSet.Moves.Where(move => move.To == BoardState.Move.To);
+      if (!piece.IsPawn) stringBuilder.Append(piece.Char);
+
+      var movesToSquare = moveSet.Moves.Where(move => move.To == to);
       if (movesToSquare.Count() > 1) {
-        if (BoardState.PiecesOnFile(BoardState.Move.From.File, BoardState.Move.Piece.SideType, BoardState.Move.Piece.PieceType) == 0)
-          stringBuilder.Append(BoardState.Move.From.FileChar);
-        else if (BoardState.PiecesOnRank(BoardState.Move.From.Rank, BoardState.Move.Piece.SideType, BoardState.Move.Piece.PieceType) == 0)
-          stringBuilder.Append(BoardState.Move.From.Rank);
-        else stringBuilder.Append(BoardState.Move.From.name);
+        if (BoardState.PiecesOnFile(from.File, piece.SideType, piece.PieceType) == 0)
+          stringBuilder.Append(from.FileChar);
+        else if (BoardState.PiecesOnRank(from.Rank, piece.SideType, piece.PieceType) == 0)
+          stringBuilder.Append(from.Rank);
+        else stringBuilder.Append(from.name);
       }
 
-      if (BoardState.Move.IsCapture) {
-        if (BoardState.Move.Piece.IsPawn) stringBuilder.Append(BoardState.Move.From.FileChar);
+      if (move.IsCapture) {
+        if (piece.IsPawn) stringBuilder.Append(from.FileChar);
         stringBuilder.Append('x');
       }
 
-      stringBuilder.Append(BoardState.Move.To.name);
+      stringBuilder.Append(to.name);
 
-      if (BoardState.Move.IsPromotion) stringBuilder.Append($"={Piece.CharFor(BoardState.Promotion)}");
+      if (move.IsPromotion) stringBuilder.Append($"={Piece.CharFor(BoardState.Promotion)}");
 
       if (moveSet.IsMate) stringBuilder.Append("#");
-      else if (BoardState.CoverageMap.InCheck(BoardState.SideToMove)) stringBuilder.Append("+");
+      else if (BoardState.InCheck) stringBuilder.Append("+");
 
       _string = stringBuilder.ToString();
     }

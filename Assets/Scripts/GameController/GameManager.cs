@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.Events;
+using System.Collections.Generic;
+using System.Linq;
 
 public class GameManager : MonoBehaviour {
   #region Constants
@@ -36,6 +38,19 @@ public class GameManager : MonoBehaviour {
   public GameState GameState { get; private set; }
 
   public bool CanUndo => !GameState.IsRoot && !GameState.Previous.IsRoot;
+
+  public GameState[] History {
+    get {
+      List<GameState> states = new();
+      GameState state = GameState;
+      while (!state.IsRoot) {
+        states.Add(state);
+        state = state.Previous;
+      }
+      states.Reverse();
+      return states.ToArray();
+    }
+  }
 
   #endregion
 

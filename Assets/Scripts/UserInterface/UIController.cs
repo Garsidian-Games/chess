@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UI;
 
 public class UIController : MonoBehaviour {
   #region Constants
@@ -10,6 +11,7 @@ public class UIController : MonoBehaviour {
 
   [System.Serializable]
   public class GUI {
+    public Button settingsButton;
     public OpponentsTurn opponentsTurn;
     public PlayersTurn playersTurn;
     public ReadyCheckModal readyCheckModal;
@@ -23,6 +25,8 @@ public class UIController : MonoBehaviour {
   [SerializeField] private Board board;
   [SerializeField] private GUI gui;
   [SerializeField] private PickPromotionModal pickPromotionModal;
+  [SerializeField] private GameScoreWindow gameScoreWindow;
+  [SerializeField] private SettingsWindow settingsWindow;
   [SerializeField] private GameObject loadingScreen;
 
   private GameController gameController;
@@ -94,7 +98,7 @@ public class UIController : MonoBehaviour {
   }
 
   private void HandleShowScore() {
-    Debug.LogError("HandleShowScore Not Implemented");
+    gameScoreWindow.Show(gameController.GameManager.History);
   }
 
   private void HandlePlayerIsReady() {
@@ -124,6 +128,7 @@ public class UIController : MonoBehaviour {
     gameController.GameManager.OnMoved.AddListener(HandleMoved);
     gameController.GameManager.OnUndone.AddListener(HandleUndone);
 
+    gui.settingsButton.onClick.AddListener(settingsWindow.Show);
     gui.playersTurn.OnUndo.AddListener(HandleUndo);
     gui.playersTurn.OnShowScore.AddListener(HandleShowScore);
     gui.readyCheckModal.OnReady.AddListener(HandlePlayerIsReady);
