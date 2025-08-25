@@ -46,7 +46,7 @@ public class SideSwitch : MonoBehaviour {
   private void TryChangeSide(SideType sideType) {
     buffered = sideType;
     if (gameController.GameManager.GameState.BoardState.IsRoot) {
-      player.Side = buffered.Value;
+      player.SideType = buffered.Value;
       buffered = null;
     } else OnConfirmationRequired.Invoke();
   }
@@ -60,7 +60,7 @@ public class SideSwitch : MonoBehaviour {
   #region Handlers
 
   public void SwitchAndReset() {
-    player.Side = buffered.Value;
+    player.SideType = buffered.Value;
     buffered = null;
     SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
   }
@@ -77,7 +77,7 @@ public class SideSwitch : MonoBehaviour {
     white.onClick.AddListener(HandleWhiteClicked);
     black.onClick.AddListener(HandleBlackClicked);
     player.OnSideChanged.AddListener(Sync);
-    Sync(player.Side);
+    Sync(player.SideType);
   }
 
   private void Awake() {

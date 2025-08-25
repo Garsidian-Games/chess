@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Assertions;
 using UnityEngine.Audio;
 using UnityEngine.Events;
 using System.Linq;
@@ -20,26 +21,51 @@ public class Player : MonoBehaviour {
     public AudioResource Game;
   }
 
+  [System.Serializable]
+  public class Sound {
+    public AudioResource Tap;
+    public AudioResource Focus;
+    public AudioResource Blur;
+  }
+
+  [System.Serializable]
+  public class BorderColor {
+    public Color Inspected;
+    public Color Opponent;
+    public Color Player;
+  }
+
   #endregion
 
   #region Fields
 
   [Header("Audio")]
   [SerializeField] private Music music;
+  [SerializeField] private Sound sound;
 
   [Header("Settings")]
+  [SerializeField] private BorderColor borderColor;
+
+  [Header("Configuration")]
   [SerializeField] private string prefPlayAsBlack = "PlayAsBlack";
+  [SerializeField] private float doubleClickTimeframe = 0.5f;
 
   private SideType side;
 
   private GameController gameController;
   private UIController uiController;
 
+  private float? clickedAt;
+  private bool wasDoubleClicked;
+
+  private Move awaitingPromotion;
+
   #endregion
 
   #region Events
 
   [HideInInspector] public SideEvent OnSideChanged;
+  [HideInInspector] public UnityEvent OnBeforePromotion;
 
   #endregion
 
@@ -47,11 +73,13 @@ public class Player : MonoBehaviour {
 
   public static Player Instance => GameObject.FindWithTag("Player").GetComponent<Player>();
 
-  public bool IsWhite => Side == SideType.White;
+  public bool IsWhite => SideType == SideType.White;
 
-  public bool IsBlack => Side == SideType.Black;
+  public bool IsBlack => SideType == SideType.Black;
 
-  public SideType Side {
+  public bool IsTurnToMove => gameController.GameManager.GameState.BoardState.SideToMove == SideType && !gameController.GameManager.GameState.IsMate;
+
+  public SideType SideType {
     get => side;
     set {
       if (side == value) return;
@@ -65,9 +93,21 @@ public class Player : MonoBehaviour {
     }
   }
 
+  public Square Clicked { get; private set; }
+
   #endregion
 
   #region Methods
+
+  public void ChoosePromotion(PieceType pieceType) {
+    Assert.IsTrue(Piece.PromotionTypes.Contains(pieceType), string.Format("{0} is not a valid promotion type!"));
+    Assert.IsNotNull(awaitingPromotion, "Not awaiting promotion!");
+
+    var move = awaitingPromotion;
+    awaitingPromotion = null;
+
+    gameController.GameManager.Make(move, pieceType);
+  }
 
   private static float CoverageOpacityFor(int count) => CoverageOpacity[Mathf.Min(count, CoverageOpacity.Length - 1)];
 
@@ -82,6 +122,90 @@ public class Player : MonoBehaviour {
     }
   }
 
+  private void ClearClicked() {
+    if (Clicked == null) return;
+    Clicked = null;
+    clickedAt = null;
+    foreach (var square in uiController.Board.Squares) {
+      square.WobblePiece = false;
+      square.BorderVisible = false;
+      square.ResetPieceBorderColor();
+    }
+    SyncCoverage();
+  }
+
+  private void Click(Piece piece, Square square) {
+    bool playerPiece = piece.SideType == SideType;
+    var _borderColor = playerPiece ? borderColor.Player : borderColor.Opponent;
+    var moves = gameController.GameManager.GameState.MovesFor(piece, square);
+    var hasMoves = moves.Count() > 0;
+
+    if (!hasMoves) {
+      var coverages = gameController.GameManager.GameState.BoardState.CoverageMap[piece, square];
+      var hasCoverage = coverages.Count() > 0;
+
+      if (!hasCoverage) {
+        gameController.AudioManager.PlaySound(sound.Tap);
+        return;
+      }
+
+      gameController.AudioManager.PlaySound(sound.Focus);
+      Clicked = square;
+      Clicked.PieceBorderColor = _borderColor;
+      Clicked.WobblePiece = true;
+      foreach (var coverage in coverages) coverage.To.BorderColor = _borderColor;
+      return;
+    }
+
+    gameController.AudioManager.PlaySound(sound.Focus);
+
+    clickedAt = Time.time;
+    Clicked = square;
+    Clicked.PieceBorderColor = _borderColor;
+    foreach (var move in moves) move.To.BorderColor = _borderColor;
+  }
+
+  private void Click(Square square) {
+    var coverages = gameController.GameManager.GameState.BoardState.CoverageMap[square];
+    var hasCoverage = coverages.Count() > 0;
+
+    gameController.AudioManager.PlaySound(hasCoverage ? sound.Focus : sound.Tap);
+    if (!hasCoverage) return;
+    clickedAt = Time.time;
+    Clicked = square;
+    Clicked.BorderColor = borderColor.Inspected;
+    foreach (var coverage in coverages) {
+      coverage.From.PieceBorderColor = borderColor.Inspected;
+      coverage.From.WobblePiece = true;
+    }
+  }
+
+  private bool ClickToMove(Square square) {
+    bool pieceOnSquare = gameController.GameManager.GameState.BoardState.IsPieceOn(Clicked);
+    if (!pieceOnSquare) return false;
+
+    var piece = gameController.GameManager.GameState.BoardState[Clicked];
+    if (piece.SideType != SideType) return false;
+
+    var move = gameController.GameManager.GameState.MovesFor(piece, Clicked).FirstOrDefault(move => move.To == square);
+    if (move == null) return false;
+
+    ClearClicked();
+    Make(move);
+
+    return true;
+  }
+
+  private void Make(Move move) {
+    if (move.IsPromotion) {
+      awaitingPromotion = move;
+      OnBeforePromotion.Invoke();
+      return;
+    }
+
+    gameController.GameManager.Make(move);
+  }
+
   #endregion
 
   #region Coroutines
@@ -91,11 +215,39 @@ public class Player : MonoBehaviour {
   #region Handlers
 
   private void HandleGameReady() {
+    SideType = PlayerPrefs.HasKey(prefPlayAsBlack) ? SideType.Black : SideType.White;
+    SyncCoverage();
     gameController.AudioManager.PlayMusic(music.Theme);
   }
 
   private void HandleSquareClicked(Square square) {
-    Debug.LogFormat("Clicked {0}", square);
+    if (!IsTurnToMove) return;
+
+    bool clickedAgain = square == Clicked;
+    bool pieceOnSquare = gameController.GameManager.GameState.BoardState.IsPieceOn(square);
+    bool isDoubleClick = clickedAt.HasValue && Time.time < (clickedAt.Value + doubleClickTimeframe);
+
+    if (Clicked != null && !clickedAgain) {
+      if (ClickToMove(square)) return;
+    }
+
+    ClearClicked();
+
+    if (isDoubleClick && pieceOnSquare) {
+      wasDoubleClicked = true;
+      Click(square);
+      clickedAt = null;
+      return;
+    }
+
+    if (clickedAgain && !wasDoubleClicked) {
+      gameController.AudioManager.PlaySound(sound.Blur);
+      return;
+    }
+
+    wasDoubleClicked = false;
+    if (pieceOnSquare) Click(gameController.GameManager.GameState.BoardState[square], square);
+    else Click(square);
   }
 
   private void HandleSquareDragBegan(Square square) {
@@ -118,7 +270,14 @@ public class Player : MonoBehaviour {
     Debug.LogFormat("Exited {0}", square);
   }
 
-  private void HandleMoved(Move _) => SyncCoverage();
+  private void HandleMoved(Move _) {
+    gameController.AudioManager.PlayMusic(music.Game);
+    SyncCoverage();
+  }
+
+  private void HandleUndone() {
+    SyncCoverage();
+  }
 
   #endregion
 
@@ -146,14 +305,12 @@ public class Player : MonoBehaviour {
     uiController.Board.OnSquareExited.AddListener(HandleSquareExited);
 
     gameController.GameManager.OnMoved.AddListener(HandleMoved);
-    SyncCoverage();
+    gameController.GameManager.OnUndone.AddListener(HandleUndone);
   }
 
   private void Awake() {
     gameController = GameController.Instance;
     uiController = UIController.Instance;
-
-    Side = PlayerPrefs.HasKey(prefPlayAsBlack) ? SideType.Black : SideType.White;
   }
 
   #endregion

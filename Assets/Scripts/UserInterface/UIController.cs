@@ -8,15 +8,28 @@ public class UIController : MonoBehaviour {
 
   #region Internal
 
+  [System.Serializable]
+  public class GUI {
+    public OpponentsTurn opponentsTurn;
+    public PlayersTurn playersTurn;
+    public ReadyCheckModal readyCheckModal;
+  }
+
   #endregion
 
   #region Fields
 
   [Header("References")]
   [SerializeField] private Board board;
+  [SerializeField] private GUI gui;
+  [SerializeField] private PickPromotionModal pickPromotionModal;
   [SerializeField] private GameObject loadingScreen;
 
   private GameController gameController;
+
+  private Player player;
+
+  private Opponent opponent;
 
   #endregion
 
@@ -46,6 +59,13 @@ public class UIController : MonoBehaviour {
     OnReady.Invoke();
   }
 
+  private void Sync() {
+    bool isRoot = gameController.GameManager.GameState.BoardState.IsRoot;
+    gui.readyCheckModal.Display(isRoot && !player.IsTurnToMove);
+    gui.opponentsTurn.Display(!player.IsTurnToMove);
+    gui.playersTurn.Display(player.IsTurnToMove, gameController.GameManager.CanUndo, !isRoot);
+  }
+
   #endregion
 
   #region Coroutines
@@ -54,8 +74,35 @@ public class UIController : MonoBehaviour {
 
   #region Handlers
 
+  private void HandlePlayerSideChanged(SideType sideType) {
+    pickPromotionModal.Sync(sideType);
+    Sync();
+  }
+
+  private void HandleMoved(Move move) {
+    gui.opponentsTurn.IsThinking = true;
+    Sync();
+  }
+
   private void HandleGameReady() {
+    Sync();
     loadingScreen.SetActive(false);
+  }
+
+  private void HandleUndo() {
+    gameController.GameManager.Undo();
+  }
+
+  private void HandleShowScore() {
+    Debug.LogError("HandleShowScore Not Implemented");
+  }
+
+  private void HandlePlayerIsReady() {
+    opponent.IsUnlocked = true;
+  }
+
+  private void HandleUndone() {
+    Sync();
   }
 
   #endregion
@@ -68,12 +115,26 @@ public class UIController : MonoBehaviour {
 
     if (board.IsReady) ReadyUp();
     else board.OnReady.AddListener(ReadyUp);
+
+    player.OnSideChanged.AddListener(HandlePlayerSideChanged);
+    player.OnBeforePromotion.AddListener(pickPromotionModal.Show);
+    pickPromotionModal.OnPicked.AddListener(player.ChoosePromotion);
+    pickPromotionModal.Sync(player.SideType);
+
+    gameController.GameManager.OnMoved.AddListener(HandleMoved);
+    gameController.GameManager.OnUndone.AddListener(HandleUndone);
+
+    gui.playersTurn.OnUndo.AddListener(HandleUndo);
+    gui.playersTurn.OnShowScore.AddListener(HandleShowScore);
+    gui.readyCheckModal.OnReady.AddListener(HandlePlayerIsReady);
   }
 
   private void Awake() {
     loadingScreen.SetActive(true);
 
     gameController = GameController.Instance;
+    opponent = Opponent.Instance;
+    player = Player.Instance;
   }
 
   #endregion

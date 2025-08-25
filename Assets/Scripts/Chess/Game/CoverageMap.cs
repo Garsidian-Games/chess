@@ -37,6 +37,8 @@ public sealed class CoverageMap {
 
   public Coverage[] this[Square square] => coverages.Where(c => c.To == square).ToArray();
 
+  public Coverage[] this[Piece piece, Square square] => coverages.Where(c => c.Piece == piece && c.From == square).ToArray();
+
   #endregion
 
   #region Methods

@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Assertions;
 using System.Text;
 using System.Linq;
 using System.Collections.Generic;
@@ -26,7 +27,13 @@ public sealed class GameState {
 
   #region Properties
 
+  public bool IsRoot => Previous == null;
+
+  public readonly GameState Previous;
+
   public readonly BoardState BoardState;
+
+  public bool IsMate => moveSet.IsMate;
 
   public Move[] Moves => moveSet.Moves;
 
@@ -34,7 +41,11 @@ public sealed class GameState {
 
   #region Methods
 
-  public GameState Make(Move move, PieceType promotion = PieceType.None) => new(BoardState.After(move, promotion));
+  public Move[] MovesFor(SideType sideType) => moveSet.Moves.Where(move => move.Piece.SideType == sideType).ToArray();
+
+  public Move[] MovesFor(Piece piece, Square from) => moveSet.Moves.Where(move => move.Piece == piece && move.From == from).ToArray();
+
+  public GameState MakeMove(Move move, PieceType promotion = PieceType.None) => new(this, move, promotion);
 
   public override string ToString() {
     if (BoardState.IsRoot) return string.Empty;
@@ -86,8 +97,11 @@ public sealed class GameState {
 
   #region Constructor
 
-  public GameState(BoardState boardState) {
-    BoardState = boardState;
+  public GameState(GameState gameState, Move move, PieceType promotion) {
+    Assert.IsTrue(gameState.Moves.Contains(move), string.Format("{0} is not valid in this game state!", move));
+
+    Previous = gameState;
+    BoardState = gameState.BoardState.After(move, promotion);
     moveSet = new(BoardState);
   }
 

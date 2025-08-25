@@ -7,10 +7,6 @@ using System.Collections.Generic;
 public class AudioManager : MonoBehaviour {
   #region Constants
 
-  private const float MinDb = -80f;
-
-  private const float Threshold = 0.01f;
-
   #endregion
 
   #region Internal
@@ -64,6 +60,8 @@ public class AudioManager : MonoBehaviour {
   #region Methods
 
   public void PlayMusic(AudioResource resource) {
+    if (musicPlayer.resource == resource) return;
+
     musicPlayer.Stop();
     musicPlayer.resource = resource;
     musicPlayer.Play();

@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 3
   tags:
   - UIController
+  - Opponent
   layers:
   - Default
   - TransparentFX

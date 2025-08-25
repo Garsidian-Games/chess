@@ -27,6 +27,7 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
 
   [System.Serializable]
   public class PieceDisplay {
+    public Wobble wobble;
     public Image icon;
     public Image border;
   }
@@ -49,6 +50,7 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
 
   private Sprite defaultPieceIcon;
   private Sprite defaultPieceBorder;
+  private Color defaultPieceBorderColor;
 
   private Piece piece;
 
@@ -123,7 +125,18 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
       piece = value;
       pieceDisplay.icon.sprite = piece == null ? defaultPieceIcon : piece.Icon;
       pieceDisplay.border.sprite = piece == null ? defaultPieceBorder : piece.Border;
+      ResetPieceBorderColor();
     }
+  }
+
+  public Color PieceBorderColor {
+    get => pieceDisplay.border.color;
+    set => pieceDisplay.border.color = value;
+  }
+
+  public bool WobblePiece {
+    get => pieceDisplay.wobble.enabled;
+    set => pieceDisplay.wobble.enabled = value;
   }
 
   #endregion
@@ -131,6 +144,8 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
   #region Methods
 
   public static char FileIndexToChar(int file) => (char)('a' + file);
+
+  public void ResetPieceBorderColor() => PieceBorderColor = defaultPieceBorderColor;
 
   public override string ToString() => $"{FileChar}{Rank + 1}";
 
@@ -181,6 +196,7 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
     image = GetComponent<Image>();
     defaultPieceIcon = pieceDisplay.icon.sprite;
     defaultPieceBorder = pieceDisplay.border.sprite;
+    defaultPieceBorderColor = pieceDisplay.border.color;
   }
 
   #endregion

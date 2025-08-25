@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab759ff126fc048b1b1f7402a66e52d5, type: 3}
   m_Name: Black_Knight
   m_EditorClassIdentifier: 
-  side: 1
+  sideType: 1
   pieceType: 3
   icon: {fileID: 21300000, guid: 6c427b15e8ce44cbe87ece9647cf4ae7, type: 3}
   border: {fileID: 21300000, guid: fb503953e58d548eb80c125d34c56c8c, type: 3}

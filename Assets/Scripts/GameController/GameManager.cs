@@ -25,6 +25,7 @@ public class GameManager : MonoBehaviour {
 
   [HideInInspector] public UnityEvent OnReady;
   [HideInInspector] public MoveEvent OnMoved;
+  [HideInInspector] public UnityEvent OnUndone;
 
   #endregion
 
@@ -34,12 +35,21 @@ public class GameManager : MonoBehaviour {
 
   public GameState GameState { get; private set; }
 
+  public bool CanUndo => !GameState.IsRoot && !GameState.Previous.IsRoot;
+
   #endregion
 
   #region Methods
 
+  public void Undo() {
+    GameState = GameState.Previous.Previous;
+    uiController.Board.Render(GameState);
+    OnUndone.Invoke();
+  }
+
   public void Make(Move move, PieceType promotion = PieceType.None) {
-    GameState = GameState.Make(move, promotion);
+    GameState = GameState.MakeMove(move, promotion);
+    uiController.Board.Render(GameState);
     OnMoved.Invoke(move);
   }
 
