@@ -1,9 +1,12 @@
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.Events;
+using System.Linq;
 
 public class Player : MonoBehaviour {
   #region Constants
+
+  public static float[] CoverageOpacity = new float[] { 0f, 0.2f, 0.4f, 0.6f };
 
   #endregion
 
@@ -44,6 +47,10 @@ public class Player : MonoBehaviour {
 
   public static Player Instance => GameObject.FindWithTag("Player").GetComponent<Player>();
 
+  public bool IsWhite => Side == SideType.White;
+
+  public bool IsBlack => Side == SideType.Black;
+
   public SideType Side {
     get => side;
     set {
@@ -54,12 +61,26 @@ public class Player : MonoBehaviour {
       else PlayerPrefs.DeleteKey(prefPlayAsBlack);
 
       OnSideChanged.Invoke(side);
+      SyncCoverage();
     }
   }
 
   #endregion
 
   #region Methods
+
+  private static float CoverageOpacityFor(int count) => CoverageOpacity[Mathf.Min(count, CoverageOpacity.Length - 1)];
+
+  private void SyncCoverage() {
+    foreach (var square in gameController.GameManager.GameState.BoardState.Squares) {
+      var coverages = gameController.GameManager.GameState.BoardState.CoverageMap[square];
+      var whiteCount = coverages.Count(c => c.Piece.IsWhite);
+      var blackCount = coverages.Count(c => c.Piece.IsBlack);
+
+      square.PlayerCoverageOpacity = CoverageOpacityFor(IsWhite ? whiteCount : blackCount);
+      square.OpponentCoverageOpacity = CoverageOpacityFor(IsWhite ? blackCount : whiteCount);
+    }
+  }
 
   #endregion
 
@@ -97,6 +118,8 @@ public class Player : MonoBehaviour {
     Debug.LogFormat("Exited {0}", square);
   }
 
+  private void HandleMoved(Move _) => SyncCoverage();
+
   #endregion
 
   #region Lifecycle
@@ -121,6 +144,9 @@ public class Player : MonoBehaviour {
     uiController.Board.OnSquareDropped.AddListener(HandleSquareDropped);
     uiController.Board.OnSquareEntered.AddListener(HandleSquareEntered);
     uiController.Board.OnSquareExited.AddListener(HandleSquareExited);
+
+    gameController.GameManager.OnMoved.AddListener(HandleMoved);
+    SyncCoverage();
   }
 
   private void Awake() {
