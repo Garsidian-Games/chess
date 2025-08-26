@@ -10,16 +10,27 @@ public class UIController : MonoBehaviour {
   #region Internal
 
   [System.Serializable]
+  public class BorderColor {
+    public Color Opponent;
+    public Color Player;
+  }
+
+  [System.Serializable]
   public class GUI {
     public Button settingsButton;
     public OpponentsTurn opponentsTurn;
     public PlayersTurn playersTurn;
     public ReadyCheckModal readyCheckModal;
+    public SideStatus sideStatusWhite;
+    public SideStatus sideStatusBlack;
   }
 
   #endregion
 
   #region Fields
+
+  [Header("Settings")]
+  [SerializeField] private BorderColor borderColor;
 
   [Header("References")]
   [SerializeField] private Board board;
@@ -28,6 +39,7 @@ public class UIController : MonoBehaviour {
   [SerializeField] private PickPromotionModal pickPromotionModal;
   [SerializeField] private GameScoreWindow gameScoreWindow;
   [SerializeField] private SettingsWindow settingsWindow;
+  [SerializeField] private GameOverModal gameOverModal;
   [SerializeField] private GameObject loadingScreen;
 
   private GameController gameController;
@@ -70,6 +82,20 @@ public class UIController : MonoBehaviour {
     gui.readyCheckModal.Display(isRoot && !player.IsTurnToMove);
     gui.opponentsTurn.Display(!isMate && !player.IsTurnToMove);
     gui.playersTurn.Display(!isMate && player.IsTurnToMove, gameController.GameManager.CanUndo, !isRoot);
+
+    var captured = gameController.GameManager.GameState.BoardState.Captured;
+    gui.sideStatusWhite.Display(captured);
+    gui.sideStatusBlack.Display(captured);
+
+    if (gameController.GameManager.GameState.BoardState.SideToMove == SideType.White) {
+      gui.sideStatusBlack.ResetBorderColor();
+      gui.sideStatusWhite.BorderColor = player.IsWhite ? borderColor.Player : borderColor.Opponent;
+    } else {
+      gui.sideStatusWhite.ResetBorderColor();
+      gui.sideStatusBlack.BorderColor = player.IsWhite ? borderColor.Opponent : borderColor.Player;
+    }
+
+    if (isMate) gameOverModal.Show(gameController.GameManager.GameState.BoardState.SideToMove);
   }
 
   #endregion
@@ -123,6 +149,11 @@ public class UIController : MonoBehaviour {
 
   #region Lifecycle
 
+  private void LateUpdate() {
+    gui.sideStatusWhite.ElapsedTime = gameController.GameManager.WhiteTimer;
+    gui.sideStatusBlack.ElapsedTime = gameController.GameManager.BlackTimer;
+  }
+
   private void Start() {
     if (gameController.IsReady) HandleGameReady();
     else gameController.OnReady.AddListener(HandleGameReady);
@@ -144,6 +175,8 @@ public class UIController : MonoBehaviour {
     gui.playersTurn.OnUndo.AddListener(HandleUndo);
     gui.playersTurn.OnShowScore.AddListener(HandleShowScore);
     gui.readyCheckModal.OnReady.AddListener(HandlePlayerIsReady);
+
+    gameOverModal.OnShowScore.AddListener(HandleShowScore);
   }
 
   private void Awake() {

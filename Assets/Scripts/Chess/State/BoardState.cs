@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Assertions;
 using System.Collections.Generic;
+using System.Linq;
 
 public sealed class BoardState {
   #region Fields
@@ -28,6 +29,8 @@ public sealed class BoardState {
   public readonly Move Move;
 
   public readonly PieceType Promotion;
+
+  public readonly Piece[] Captured;
 
   public bool IsRoot => Previous == null;
 
@@ -131,7 +134,12 @@ public sealed class BoardState {
 
     state = new(boardState.state);
 
-    if (move.IsCapture) state.Remove(move.Captures);
+    List<Piece> captured = new(boardState.Captured);
+    if (move.IsCapture) {
+      captured.Add(state[move.Captures]);
+      state.Remove(move.Captures);
+    }
+    Captured = captured.ToArray();
 
     if (move.IsCastleKS) {
       state.Remove(board[move.From.Rank, 7]);
@@ -155,6 +163,7 @@ public sealed class BoardState {
     this.black = black;
 
     state = new();
+    Captured = new Piece[0];
 
     Setup(white);
     Setup(black);

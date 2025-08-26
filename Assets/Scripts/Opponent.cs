@@ -8,11 +8,15 @@ using System.Linq;
 public class Opponent : MonoBehaviour {
   #region Constants
 
-  private readonly string[] fool = new string[] { "f3", "g4" };
-
-  private readonly string[] foolsMates = new string[] { "e5", "h4" };
-
   private readonly string[] enPassant = new string[] { "a5", "h5", "b5", "g5", "c5", "f5", "d5", "e5" };
+
+  private readonly string[] foolWhite = new string[] { "f3", "g4" };
+
+  private readonly string[] foolBlack = new string[] { "e5", "h4" };
+
+  private readonly string[] scholarWhite = new string[] { "e4", "Bc4", "Qh5", "Qf7" };
+
+  private readonly string[] scholarBlack = new string[] { "e5", "Nc6", "Nf6" };
 
   #endregion
 
@@ -20,9 +24,9 @@ public class Opponent : MonoBehaviour {
 
   public enum Mode {
     AI,
-    Fool,
-    FoolsMate,
     EnPassant,
+    Fool,
+    Scholar,
   }
 
   [System.Serializable]
@@ -88,12 +92,13 @@ public class Opponent : MonoBehaviour {
 
   private static Move RandomFrom(IEnumerable<Move> moves) => moves.ElementAt(Random.Range(0, moves.Count()));
 
-  private static Move EndingOnSquare(Move[] moves, string squareName) {
+  private static Move EndingOnSquare(Move[] moves, string annotation) {
+    var squareName = annotation[^2..];
     var to = moves.Where(move => move.To.name == squareName);
     if (to.Count() == 1) return to.First();
 
-    var pieceType = squareName.Length == 2 ? PieceType.Pawn : Piece.TypeFrom(squareName[0]);
-    return to.FirstOrDefault(move => move.Piece.PieceType == pieceType);
+    var pieceType = annotation.Length == 2 ? PieceType.Pawn : Piece.TypeFrom(annotation[0]);
+    return to.First(move => move.Piece.PieceType == pieceType);
   }
 
   private Move NextFromOrRandom(string[] annotatedMoves) {
@@ -115,8 +120,8 @@ public class Opponent : MonoBehaviour {
 
   private string[] AnnotatedMovesFor(Mode mode) {
     return mode switch {
-      Mode.Fool => fool,
-      Mode.FoolsMate => foolsMates,
+      Mode.Fool => SideType == SideType.White ? foolWhite : foolBlack,
+      Mode.Scholar => SideType == SideType.White ? scholarWhite : scholarBlack,
       Mode.EnPassant => enPassant,
       _ => throw new System.ArgumentException(string.Format("{0} is not a valid mode!", mode)),
     };

@@ -83,6 +83,7 @@ public class Player : MonoBehaviour {
   private UIController uiController;
 
   private float? clickedAt;
+  private float? clearedAt;
   private bool wasDoubleClicked;
 
   private Move awaitingPromotion;
@@ -172,6 +173,7 @@ public class Player : MonoBehaviour {
     if (Clicked == null) return;
     Clicked = null;
     clickedAt = null;
+    clearedAt = Time.time;
     foreach (var square in uiController.Board.Squares) {
       square.WobblePiece = false;
       square.PulsePiece = false;
@@ -198,6 +200,8 @@ public class Player : MonoBehaviour {
         return;
       }
 
+      clickedAt = Time.time;
+      clearedAt = null;
       gameController.AudioManager.PlaySound(sound.Focus);
       Clicked = square;
       Clicked.PieceBorderColor = _borderColor;
@@ -209,6 +213,7 @@ public class Player : MonoBehaviour {
     gameController.AudioManager.PlaySound(sound.Click);
 
     clickedAt = Time.time;
+    clearedAt = null;
     Clicked = square;
     Clicked.PieceBorderColor = _borderColor;
     Clicked.WobblePiece = true;
@@ -218,10 +223,11 @@ public class Player : MonoBehaviour {
   private void Click(Square square) {
     var coverages = gameController.GameManager.GameState.BoardState.CoverageMap[square];
     var hasCoverage = coverages.Count() > 0;
-    Debug.Log(hasCoverage ? sound.Focus : sound.Empty);
+    //Debug.Log(hasCoverage ? sound.Focus : sound.Empty);
     gameController.AudioManager.PlaySound(hasCoverage ? sound.Focus : sound.Empty);
     if (!hasCoverage) return;
     clickedAt = Time.time;
+    clearedAt = null;
     Clicked = square;
     Clicked.BorderColor = borderColor.Inspected;
     foreach (var coverage in coverages) {
@@ -287,6 +293,7 @@ public class Player : MonoBehaviour {
     bool clickedAgain = square == Clicked;
     bool pieceOnSquare = gameController.GameManager.GameState.BoardState.IsPieceOn(square);
     bool isDoubleClick = clickedAt.HasValue && Time.time < (clickedAt.Value + doubleClickTimeframe);
+    bool isDoubleClickFromClear = clearedAt.HasValue && Time.time < (clearedAt.Value + doubleClickTimeframe);
 
     if (Clicked != null && !clickedAgain) {
       if (ClickToMove(square)) return;
@@ -294,7 +301,7 @@ public class Player : MonoBehaviour {
 
     ClearClicked();
 
-    if (isDoubleClick && pieceOnSquare) {
+    if ((isDoubleClickFromClear || isDoubleClick) && pieceOnSquare) {
       wasDoubleClicked = true;
       Click(square);
       clickedAt = null;
