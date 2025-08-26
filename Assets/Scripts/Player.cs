@@ -64,6 +64,7 @@ public class Player : MonoBehaviour {
   [SerializeField] private Sound sound;
 
   [Header("Settings")]
+  [SerializeField] private Color targetColor;
   [SerializeField] private BorderColor borderColor;
 
   [Header("Configuration")]
@@ -151,6 +152,7 @@ public class Player : MonoBehaviour {
       square.PulsePiece = false;
       square.BorderVisible = false;
       square.HighlightVisible = false;
+      square.TargetVisible = false;
       square.ResetPieceBorderColor();
     }
     SyncCoverage();
@@ -185,7 +187,7 @@ public class Player : MonoBehaviour {
     Clicked = square;
     Clicked.PieceBorderColor = _borderColor;
     Clicked.WobblePiece = true;
-    foreach (var move in moves) move.To.BorderColor = _borderColor;
+    foreach (var move in moves) move.To.TargetColor = targetColor;
   }
 
   private void Click(Square square) {

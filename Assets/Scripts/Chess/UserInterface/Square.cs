@@ -39,6 +39,7 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
 
   [SerializeField] private Coverage coverage;
   [SerializeField] private Image highlight;
+  [SerializeField] private Image target;
   [SerializeField] private Image border;
   [SerializeField] private PieceDisplay pieceDisplay;
   [SerializeField] private Image screen;
@@ -90,6 +91,19 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
   public bool HighlightVisible {
     get => highlight.enabled;
     set => highlight.enabled = value;
+  }
+
+  public Color TargetColor {
+    get => target.color;
+    set {
+      target.color = value;
+      TargetVisible = true;
+    }
+  }
+
+  public bool TargetVisible {
+    get => target.enabled;
+    set => target.enabled = value;
   }
 
   public Color BorderColor {
