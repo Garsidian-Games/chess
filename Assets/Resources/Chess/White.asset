@@ -16,6 +16,7 @@ MonoBehaviour:
   pawnMoveDirection: 1
   homeRank: 0
   pawnRank: 1
+  promotionRank: 7
   pawn: {fileID: 11400000, guid: 4f2952133671643ef9f0f93a81e62236, type: 2}
   rook: {fileID: 11400000, guid: eb5a85fe301d34fc3895a664caece7ca, type: 2}
   knight: {fileID: 11400000, guid: ab50911f685944f06921dbb69802f6f6, type: 2}

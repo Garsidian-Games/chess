@@ -96,6 +96,10 @@ public class UIController : MonoBehaviour {
     }
 
     if (isMate) gameOverModal.Show(gameController.GameManager.GameState.BoardState.SideToMove);
+    else {
+      gui.sideStatusWhite.InCheck = gameController.GameManager.GameState.BoardState.WhiteInCheck;
+      gui.sideStatusBlack.InCheck = gameController.GameManager.GameState.BoardState.BlackInCheck;
+    }
   }
 
   #endregion

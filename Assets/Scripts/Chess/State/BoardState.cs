@@ -34,6 +34,10 @@ public sealed class BoardState {
 
   public bool IsRoot => Previous == null;
 
+  public bool WhiteInCheck => coverageMap.InCheck(SideType.White);
+
+  public bool BlackInCheck => coverageMap.InCheck(SideType.Black);
+
   public bool InCheck => coverageMap.InCheck(SideToMove);
 
   public Square[] Squares => board.Squares;

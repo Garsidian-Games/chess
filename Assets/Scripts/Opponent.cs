@@ -158,7 +158,7 @@ public class Opponent : MonoBehaviour {
 
   #region Coroutines
 
-  public IEnumerator Think() {
+  private IEnumerator Think() {
     float elapsed = 0f;
 
     GameState gameState = gameController.GameManager.GameState;
@@ -185,7 +185,8 @@ public class Opponent : MonoBehaviour {
         count++;
       }
 
-      if (moves.Count > 0) yield return new WaitForEndOfFrame();
+      //if (moves.Count > 0)
+        yield return new WaitForEndOfFrame();
     }
 
     Make(bestMoves[Random.Range(0, bestMoves.Count)]);

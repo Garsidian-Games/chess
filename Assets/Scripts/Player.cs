@@ -140,6 +140,11 @@ public class Player : MonoBehaviour {
     awaitingPromotion = null;
 
     gameController.GameManager.Make(move, pieceType);
+    gameController.AudioManager.PlaySound(
+      gameController.GameManager.GameState.IsMate ? sound.Mate :
+      gameController.GameManager.GameState.InCheck ? sound.Check :
+      move.IsCapture ? sound.Capture : sound.Move
+    );
   }
 
   private static float CoverageOpacityFor(int count) => CoverageOpacity[Mathf.Min(count, CoverageOpacity.Length - 1)];
