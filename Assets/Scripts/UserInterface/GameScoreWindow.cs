@@ -40,7 +40,7 @@ public class GameScoreWindow : MonoBehaviour {
       var row = Get(rowIndex);
       var annotation = states[index].ToString();
 
-      Debug.LogFormat("{0} {1} {2}", rowIndex, row, annotation);
+      //Debug.LogFormat("{0} {1} {2}", rowIndex, row, annotation);
 
       if (index % 2 == 0) row.WhiteText = annotation;
       else row.BlackText = annotation;

@@ -69,7 +69,7 @@ public class AudioManager : MonoBehaviour {
 
   public void PlaySound(AudioResource resource, bool unique = false) {
     if (unique && playing.Contains(resource)) return;
-    Debug.Log(resource);
+    //Debug.Log(resource);
     AudioSource source = idle.Count > 0 ? idle.Dequeue() : Instantiate(soundPlayer, transform).GetComponent<AudioSource>();
     StartCoroutine(PlaySoundOn(resource, source, unique));
   }
