@@ -6,8 +6,8 @@ AudioContainerElement:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Button_Click_{-5982299506108506262}
-  m_AudioClip: {fileID: 8300000, guid: 266daab32ab8946afbc217d983426f6b, type: 3}
+  m_Name: Player_Promotion_{-5982299506108506262}
+  m_AudioClip: {fileID: 8300000, guid: 1d9b64aa9269241f697f8444e704d4c3, type: 3}
   m_Volume: 0
   m_Enabled: 1
 --- !u!1307931743 &6418180475301049370
@@ -16,7 +16,7 @@ AudioRandomContainer:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Button_Click
+  m_Name: Player_Promotion
   m_Volume: 0
   m_Pitch: 0
   m_AutomaticTriggerTime: 0

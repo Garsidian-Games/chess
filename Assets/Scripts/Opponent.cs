@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Audio;
 using UnityEngine.Events;
 using System.Collections;
 using System.Collections.Generic;
@@ -11,10 +12,21 @@ public class Opponent : MonoBehaviour {
 
   #region Internal
 
+  [System.Serializable]
+  public class Sound {
+    public AudioResource capture;
+    public AudioResource check;
+    public AudioResource move;
+  }
+
   #endregion
 
   #region Fields
 
+  [Header("Settings")]
+  [SerializeField] private Sound sound;
+
+  [Header("Configuration")]
   [SerializeField] private float thinkingTime = 3f;
   [SerializeField] private int movesPerFrame = 128;
 
@@ -72,6 +84,7 @@ public class Opponent : MonoBehaviour {
   private void Make(Move move) {
     PieceType promotion = PieceType.None;
     gameController.GameManager.Make(move, promotion);
+    gameController.AudioManager.PlaySound(move.GivesCheck ? sound.check : move.IsCapture ? sound.capture : sound.move);
   }
 
   private int Score(GameState gameState, Move move) {

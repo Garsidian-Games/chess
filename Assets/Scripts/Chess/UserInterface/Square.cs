@@ -28,6 +28,7 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
   [System.Serializable]
   public class PieceDisplay {
     public Wobble wobble;
+    public PulseScale pulse;
     public Image icon;
     public Image border;
   }
@@ -137,6 +138,11 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
   public bool WobblePiece {
     get => pieceDisplay.wobble.enabled;
     set => pieceDisplay.wobble.enabled = value;
+  }
+
+  public bool PulsePiece {
+    get => pieceDisplay.pulse.enabled;
+    set => pieceDisplay.pulse.enabled = value;
   }
 
   #endregion

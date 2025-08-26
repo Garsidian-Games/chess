@@ -23,9 +23,29 @@ public class Player : MonoBehaviour {
 
   [System.Serializable]
   public class Sound {
-    public AudioResource Tap;
-    public AudioResource Focus;
+    [Tooltip("Played when clearing the clicked square")]
     public AudioResource Blur;
+    [Tooltip("Played when a move captures an opponent's piece")]
+    public AudioResource Capture;
+    [Tooltip("Played when clicking on a square a piece")]
+    public AudioResource Click;
+    [Tooltip("Played when a move results in check")]
+    public AudioResource Check;
+    public AudioResource DragDrop;
+    public AudioResource DragPickup;
+    public AudioResource DragReset;
+    [Tooltip("Played when clicking on a square with no pieces or coverage")]
+    public AudioResource Empty;
+    [Tooltip("Played when clicking on a square with only coverage or double clicking on a square with a piece")]
+    public AudioResource Focus;
+    [Tooltip("Played when something is done wrong")]
+    public AudioResource Invalid;
+    [Tooltip("Played when a piece is moved by a click")]
+    public AudioResource Move;
+    [Tooltip("Played when a pawn is being promoted")]
+    public AudioResource Promotion;
+    [Tooltip("Played when clicking on a pieces with no moves or coverage")]
+    public AudioResource Stuck;
   }
 
   [System.Serializable]
@@ -128,7 +148,9 @@ public class Player : MonoBehaviour {
     clickedAt = null;
     foreach (var square in uiController.Board.Squares) {
       square.WobblePiece = false;
+      square.PulsePiece = false;
       square.BorderVisible = false;
+      square.HighlightVisible = false;
       square.ResetPieceBorderColor();
     }
     SyncCoverage();
@@ -140,43 +162,44 @@ public class Player : MonoBehaviour {
     var moves = gameController.GameManager.GameState.MovesFor(piece, square);
     var hasMoves = moves.Count() > 0;
 
-    if (!hasMoves) {
+    if (!playerPiece || !hasMoves) {
       var coverages = gameController.GameManager.GameState.BoardState.CoverageMap[piece, square];
       var hasCoverage = coverages.Count() > 0;
 
       if (!hasCoverage) {
-        gameController.AudioManager.PlaySound(sound.Tap);
+        gameController.AudioManager.PlaySound(sound.Stuck);
         return;
       }
 
       gameController.AudioManager.PlaySound(sound.Focus);
       Clicked = square;
       Clicked.PieceBorderColor = _borderColor;
-      Clicked.WobblePiece = true;
-      foreach (var coverage in coverages) coverage.To.BorderColor = _borderColor;
+      Clicked.PulsePiece = true;
+      foreach (var coverage in coverages) coverage.To.HighlightVisible = true;
       return;
     }
 
-    gameController.AudioManager.PlaySound(sound.Focus);
+    gameController.AudioManager.PlaySound(sound.Click);
 
     clickedAt = Time.time;
     Clicked = square;
     Clicked.PieceBorderColor = _borderColor;
+    Clicked.WobblePiece = true;
     foreach (var move in moves) move.To.BorderColor = _borderColor;
   }
 
   private void Click(Square square) {
     var coverages = gameController.GameManager.GameState.BoardState.CoverageMap[square];
     var hasCoverage = coverages.Count() > 0;
-
-    gameController.AudioManager.PlaySound(hasCoverage ? sound.Focus : sound.Tap);
+    Debug.Log(hasCoverage ? sound.Focus : sound.Empty);
+    gameController.AudioManager.PlaySound(hasCoverage ? sound.Focus : sound.Empty);
     if (!hasCoverage) return;
     clickedAt = Time.time;
     Clicked = square;
     Clicked.BorderColor = borderColor.Inspected;
     foreach (var coverage in coverages) {
       coverage.From.PieceBorderColor = borderColor.Inspected;
-      coverage.From.WobblePiece = true;
+      coverage.From.PulsePiece = true;
     }
   }
 
@@ -192,12 +215,14 @@ public class Player : MonoBehaviour {
 
     ClearClicked();
     Make(move);
+    gameController.AudioManager.PlaySound(move.GivesCheck ? sound.Check : move.IsCapture ? sound.Capture : sound.Move);
 
     return true;
   }
 
   private void Make(Move move) {
     if (move.IsPromotion) {
+      gameController.AudioManager.PlaySound(sound.Promotion);
       awaitingPromotion = move;
       OnBeforePromotion.Invoke();
       return;
@@ -221,7 +246,10 @@ public class Player : MonoBehaviour {
   }
 
   private void HandleSquareClicked(Square square) {
-    if (!IsTurnToMove) return;
+    if (!IsTurnToMove) {
+      gameController.AudioManager.PlaySound(sound.Invalid);
+      return;
+    }
 
     bool clickedAgain = square == Clicked;
     bool pieceOnSquare = gameController.GameManager.GameState.BoardState.IsPieceOn(square);
@@ -251,6 +279,19 @@ public class Player : MonoBehaviour {
   }
 
   private void HandleSquareDragBegan(Square square) {
+    ClearClicked();
+
+    if (!IsTurnToMove || !gameController.GameManager.GameState.BoardState.IsPieceOn(square)) {
+      gameController.AudioManager.PlaySound(sound.Invalid);
+      return;
+    }
+
+    var piece = gameController.GameManager.GameState.BoardState[square];
+    if (piece.SideType != SideType) {
+      gameController.AudioManager.PlaySound(sound.Invalid);
+      return;
+    }
+
     Debug.LogFormat("Drag Began {0}", square);
   }
 
