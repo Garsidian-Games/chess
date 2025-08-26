@@ -13,6 +13,7 @@ public class Player : MonoBehaviour {
 
   #region Internal
 
+  [System.Serializable] public class PieceEvent : UnityEvent<Piece> { }
   [System.Serializable] public class SideEvent : UnityEvent<SideType> { }
 
   [System.Serializable]
@@ -31,8 +32,11 @@ public class Player : MonoBehaviour {
     public AudioResource Click;
     [Tooltip("Played when a move results in check")]
     public AudioResource Check;
+    [Tooltip("Played when a piece is moved by dropping a dragged piece on a valid square")]
     public AudioResource DragDrop;
+    [Tooltip("Played when picking up a dragged piece")]
     public AudioResource DragPickup;
+    [Tooltip("Played when releasing a dragged piece on an invalid square")]
     public AudioResource DragReset;
     [Tooltip("Played when clicking on a square with no pieces or coverage")]
     public AudioResource Empty;
@@ -40,11 +44,13 @@ public class Player : MonoBehaviour {
     public AudioResource Focus;
     [Tooltip("Played when something is done wrong")]
     public AudioResource Invalid;
+    [Tooltip("Played when player wins")]
+    public AudioResource Mate;
     [Tooltip("Played when a piece is moved by a click")]
     public AudioResource Move;
     [Tooltip("Played when a pawn is being promoted")]
     public AudioResource Promotion;
-    [Tooltip("Played when clicking on a pieces with no moves or coverage")]
+    [Tooltip("Played when clicking on or dragging a pieces with no moves or coverage")]
     public AudioResource Stuck;
   }
 
@@ -80,6 +86,7 @@ public class Player : MonoBehaviour {
   private bool wasDoubleClicked;
 
   private Move awaitingPromotion;
+  private Move[] draggedMoves;
 
   #endregion
 
@@ -87,6 +94,8 @@ public class Player : MonoBehaviour {
 
   [HideInInspector] public SideEvent OnSideChanged;
   [HideInInspector] public UnityEvent OnBeforePromotion;
+  [HideInInspector] public PieceEvent OnDragStart;
+  [HideInInspector] public UnityEvent OnDragEnd;
 
   #endregion
 
@@ -116,12 +125,14 @@ public class Player : MonoBehaviour {
 
   public Square Clicked { get; private set; }
 
+  public Piece Dragged { get; private set; }
+
   #endregion
 
   #region Methods
 
   public void ChoosePromotion(PieceType pieceType) {
-    Assert.IsTrue(Piece.PromotionTypes.Contains(pieceType), string.Format("{0} is not a valid promotion type!"));
+    Assert.IsTrue(Piece.PromotionTypes.Contains(pieceType), string.Format("{0} is not a valid promotion type!", pieceType));
     Assert.IsNotNull(awaitingPromotion, "Not awaiting promotion!");
 
     var move = awaitingPromotion;
@@ -141,6 +152,20 @@ public class Player : MonoBehaviour {
       square.PlayerCoverageOpacity = CoverageOpacityFor(IsWhite ? whiteCount : blackCount);
       square.OpponentCoverageOpacity = CoverageOpacityFor(IsWhite ? blackCount : whiteCount);
     }
+  }
+
+  private void ClearDragged() {
+    if (Dragged == null) return;
+    Dragged = null;
+    draggedMoves = null;
+
+    foreach (var square in uiController.Board.Squares) {
+      square.ScreenVisible = false;
+      square.BorderVisible = false;
+      square.ResetPieceBorderColor();
+    }
+
+    OnDragEnd.Invoke();
   }
 
   private void ClearClicked() {
@@ -216,13 +241,12 @@ public class Player : MonoBehaviour {
     if (move == null) return false;
 
     ClearClicked();
-    Make(move);
-    gameController.AudioManager.PlaySound(move.GivesCheck ? sound.Check : move.IsCapture ? sound.Capture : sound.Move);
+    Make(move, sound.Move);
 
     return true;
   }
 
-  private void Make(Move move) {
+  private void Make(Move move, AudioResource moveSound) {
     if (move.IsPromotion) {
       gameController.AudioManager.PlaySound(sound.Promotion);
       awaitingPromotion = move;
@@ -231,6 +255,11 @@ public class Player : MonoBehaviour {
     }
 
     gameController.GameManager.Make(move);
+    gameController.AudioManager.PlaySound(
+      gameController.GameManager.GameState.IsMate ? sound.Mate :
+      gameController.GameManager.GameState.InCheck ? sound.Check :
+      move.IsCapture ? sound.Capture : moveSound
+    );
   }
 
   #endregion
@@ -248,6 +277,8 @@ public class Player : MonoBehaviour {
   }
 
   private void HandleSquareClicked(Square square) {
+    if (Dragged != null) return;
+
     if (!IsTurnToMove) {
       gameController.AudioManager.PlaySound(sound.Invalid);
       return;
@@ -294,27 +325,54 @@ public class Player : MonoBehaviour {
       return;
     }
 
-    Debug.LogFormat("Drag Began {0}", square);
+    var moves = gameController.GameManager.GameState.MovesFor(piece, square);
+    if (moves.Count() == 0) {
+      gameController.AudioManager.PlaySound(sound.Stuck);
+      return;
+    }
+
+    Dragged = piece;
+    draggedMoves = moves;
+    gameController.AudioManager.PlaySound(sound.DragPickup);
+    OnDragStart.Invoke(Dragged);
+
+    foreach (var s in uiController.Board.Squares) s.ScreenVisible = !moves.Any(move => move.To == s);
   }
 
   private void HandleSquareDragEnded(Square square) {
-    Debug.LogFormat("Drag Ended {0}", square);
+    if (Dragged == null) return;
+    gameController.AudioManager.PlaySound(sound.DragReset);
+    ClearDragged();
   }
 
   private void HandleSquareDropped(Square square) {
-    Debug.LogFormat("Dropped {0}", square);
+    if (Dragged == null) return;
+
+    var move = draggedMoves.FirstOrDefault(move => move.To == square);
+    if (move == null) return;
+
+    ClearDragged();
+    Make(move, sound.DragDrop);
   }
 
   private void HandleSquareEntered(Square square) {
-    Debug.LogFormat("Entered {0}", square);
+    if (Dragged == null) return;
+    if (!draggedMoves.Any(move => move.To == square)) return;
+
+    square.BorderColor = borderColor.Player;
+    if (gameController.GameManager.GameState.BoardState.IsPieceOn(square))
+      square.PieceBorderColor = borderColor.Opponent;
   }
 
   private void HandleSquareExited(Square square) {
-    Debug.LogFormat("Exited {0}", square);
+    if (Dragged == null) return;
+
+    square.BorderVisible = false;
+    square.ResetPieceBorderColor();
   }
 
   private void HandleMoved(Move _) {
-    gameController.AudioManager.PlayMusic(music.Game);
+    gameController.AudioManager.PlayMusic(gameController.GameManager.GameState.IsMate ? music.Theme : music.Game);
     SyncCoverage();
   }
 

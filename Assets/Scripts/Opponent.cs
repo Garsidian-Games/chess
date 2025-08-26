@@ -8,14 +8,27 @@ using System.Linq;
 public class Opponent : MonoBehaviour {
   #region Constants
 
+  private readonly string[] fool = new string[] { "f3", "g4" };
+
+  private readonly string[] foolsMates = new string[] { "e5", "h4" };
+
+  private readonly string[] enPassant = new string[] { "a5", "h5", "b5", "g5", "c5", "f5", "d5", "e5" };
+
   #endregion
 
   #region Internal
+
+  public enum Mode {
+    AI,
+    Fool,
+    FoolsMate,
+  }
 
   [System.Serializable]
   public class Sound {
     public AudioResource capture;
     public AudioResource check;
+    public AudioResource mate;
     public AudioResource move;
   }
 
@@ -27,6 +40,7 @@ public class Opponent : MonoBehaviour {
   [SerializeField] private Sound sound;
 
   [Header("Configuration")]
+  [SerializeField] private Mode mode;
   [SerializeField] private float thinkingTime = 3f;
   [SerializeField] private int movesPerFrame = 128;
 
@@ -38,6 +52,8 @@ public class Opponent : MonoBehaviour {
   private Player player;
 
   private readonly Dictionary<GameState, Dictionary<Move, int>> scores = new();
+
+  private int moveCounter;
 
   #endregion
 
@@ -69,9 +85,30 @@ public class Opponent : MonoBehaviour {
 
   #region Methods
 
+  private static Move RandomFrom(IEnumerable<Move> moves) => moves.ElementAt(Random.Range(0, moves.Count()));
+
+  private static Move EndingOnSquare(Move[] moves, string squareName) {
+    var to = moves.Where(move => move.To.name == squareName);
+    if (to.Count() == 1) return to.First();
+
+    var pieceType = squareName.Length == 2 ? PieceType.Pawn : Piece.TypeFrom(squareName[0]);
+    return to.FirstOrDefault(move => move.Piece.PieceType == pieceType);
+  }
+
+  private Move NextFromOrRandom(string[] annotatedMoves) {
+    var moves = gameController.GameManager.GameState.MovesFor(SideType);
+    if (moveCounter == annotatedMoves.Length) return RandomFrom(moves);
+    return EndingOnSquare(moves, annotatedMoves[moveCounter++]);
+  }
+
   private void StartThinking() {
-    Debug.Log("StartThinking");
-    thinking = StartCoroutine(Think());
+    switch (mode) {
+      case Mode.AI:
+        thinking = StartCoroutine(Think());
+        break;
+      case Mode.Fool: Make(NextFromOrRandom(fool)); break;
+      case Mode.FoolsMate: Make(NextFromOrRandom(foolsMates)); break;
+    }
   }
 
   private void StopThinking() {
@@ -84,7 +121,11 @@ public class Opponent : MonoBehaviour {
   private void Make(Move move) {
     PieceType promotion = PieceType.None;
     gameController.GameManager.Make(move, promotion);
-    gameController.AudioManager.PlaySound(move.GivesCheck ? sound.check : move.IsCapture ? sound.capture : sound.move);
+    gameController.AudioManager.PlaySound(
+      gameController.GameManager.GameState.IsMate ? sound.mate :
+      gameController.GameManager.GameState.InCheck ? sound.check :
+      move.IsCapture ? sound.capture : sound.move
+    );
   }
 
   private int Score(GameState gameState, Move move) {

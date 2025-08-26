@@ -44,6 +44,17 @@ public class Piece : ScriptableObject {
 
   #region Methods
 
+  public static PieceType TypeFrom(char c) {
+    return c switch {
+      'R' => PieceType.Rook,
+      'N' => PieceType.Knight,
+      'B' => PieceType.Bishop,
+      'Q' => PieceType.Queen,
+      'K' => PieceType.King,
+      _ => PieceType.None,
+    };
+  }
+
   public static char CharFor(PieceType pieceType) {
     return pieceType switch {
       PieceType.Rook => 'R',

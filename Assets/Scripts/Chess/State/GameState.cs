@@ -35,6 +35,8 @@ public sealed class GameState {
 
   public readonly BoardState BoardState;
 
+  public bool InCheck => BoardState.InCheck;
+
   public bool IsMate => moveSet.IsMate;
 
   public Move[] Moves => moveSet.Moves;

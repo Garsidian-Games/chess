@@ -23,6 +23,7 @@ public class UIController : MonoBehaviour {
 
   [Header("References")]
   [SerializeField] private Board board;
+  [SerializeField] private DraggedPiece draggedPiece;
   [SerializeField] private GUI gui;
   [SerializeField] private PickPromotionModal pickPromotionModal;
   [SerializeField] private GameScoreWindow gameScoreWindow;
@@ -65,9 +66,10 @@ public class UIController : MonoBehaviour {
 
   private void Sync() {
     bool isRoot = gameController.GameManager.GameState.BoardState.IsRoot;
+    bool isMate = gameController.GameManager.GameState.IsMate;
     gui.readyCheckModal.Display(isRoot && !player.IsTurnToMove);
-    gui.opponentsTurn.Display(!player.IsTurnToMove);
-    gui.playersTurn.Display(player.IsTurnToMove, gameController.GameManager.CanUndo, !isRoot);
+    gui.opponentsTurn.Display(!isMate && !player.IsTurnToMove);
+    gui.playersTurn.Display(!isMate && player.IsTurnToMove, gameController.GameManager.CanUndo, !isRoot);
   }
 
   #endregion
@@ -109,6 +111,14 @@ public class UIController : MonoBehaviour {
     Sync();
   }
 
+  private void HandleDragStart(Piece piece) {
+    draggedPiece.Piece = piece;
+  }
+
+  private void HandleDragEnd() {
+    draggedPiece.Piece = null;
+  }
+
   #endregion
 
   #region Lifecycle
@@ -122,6 +132,8 @@ public class UIController : MonoBehaviour {
 
     player.OnSideChanged.AddListener(HandlePlayerSideChanged);
     player.OnBeforePromotion.AddListener(pickPromotionModal.Show);
+    player.OnDragStart.AddListener(HandleDragStart);
+    player.OnDragEnd.AddListener(HandleDragEnd);
     pickPromotionModal.OnPicked.AddListener(player.ChoosePromotion);
     pickPromotionModal.Sync(player.SideType);
 
