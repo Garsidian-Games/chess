@@ -22,6 +22,7 @@ public class Opponent : MonoBehaviour {
     AI,
     Fool,
     FoolsMate,
+    EnPassant,
   }
 
   [System.Serializable]
@@ -106,9 +107,19 @@ public class Opponent : MonoBehaviour {
       case Mode.AI:
         thinking = StartCoroutine(Think());
         break;
-      case Mode.Fool: Make(NextFromOrRandom(fool)); break;
-      case Mode.FoolsMate: Make(NextFromOrRandom(foolsMates)); break;
+      default:
+        Make(NextFromOrRandom(AnnotatedMovesFor(mode)));
+        break;
     }
+  }
+
+  private string[] AnnotatedMovesFor(Mode mode) {
+    return mode switch {
+      Mode.Fool => fool,
+      Mode.FoolsMate => foolsMates,
+      Mode.EnPassant => enPassant,
+      _ => throw new System.ArgumentException(string.Format("{0} is not a valid mode!", mode)),
+    };
   }
 
   private void StopThinking() {
