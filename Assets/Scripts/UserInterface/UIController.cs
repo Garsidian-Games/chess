@@ -134,6 +134,7 @@ public class UIController : MonoBehaviour {
   }
 
   private void HandlePlayerIsReady() {
+    gui.opponentsTurn.IsThinking = true;
     opponent.IsUnlocked = true;
   }
 

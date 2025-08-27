@@ -39,12 +39,17 @@ public class ReadyCheckModal : MonoBehaviour {
 
   #region Handlers
 
+  private void HandleButtonClick() {
+    OnReady.Invoke();
+    gameObject.SetActive(false);
+  }
+
   #endregion
 
   #region Lifecycle
 
   private void Start() {
-    button.onClick.AddListener(OnReady.Invoke);
+    button.onClick.AddListener(HandleButtonClick);
   }
 
   #endregion
