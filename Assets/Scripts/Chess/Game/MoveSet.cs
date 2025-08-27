@@ -81,7 +81,7 @@ public sealed class MoveSet {
     if (boardState.IsPieceOn(boardState[rank, 1])) return;
     if (boardState.IsPieceOn(boardState[rank, 2])) return;
     if (boardState.IsPieceOn(boardState[rank, 3])) return;
-    if (boardState.IsPieceOn(boardState[rank, 0])) return;
+    if (boardState.IsDirty(boardState[rank, 0])) return;
 
     var kingSquare = boardState[rank, 4];
     if (boardState.IsDirty(kingSquare)) return;
@@ -103,7 +103,7 @@ public sealed class MoveSet {
     if (boardState.CoverageMap.Coverages.Any(c => c.Piece.SideType != sideToMove.SideType && c.To.Rank == rank && CastleKingSideFiles.Contains(c.To.File)))
       return;
 
-    Add(new(boardState[kingSquare], kingSquare, boardState[rank, 6], MoveFlag.CastleQueenSide));
+    Add(new(boardState[kingSquare], kingSquare, boardState[rank, 6], MoveFlag.CastleKingSide));
   }
 
   private Move For(Coverage coverage) {
