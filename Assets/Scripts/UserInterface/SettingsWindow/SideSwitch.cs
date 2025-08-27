@@ -60,6 +60,7 @@ public class SideSwitch : MonoBehaviour {
   #region Handlers
 
   public void SwitchAndReset() {
+    gameController.GameManager.ClearSave();
     player.SideType = buffered.Value;
     buffered = null;
     SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);

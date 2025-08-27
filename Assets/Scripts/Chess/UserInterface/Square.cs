@@ -229,7 +229,6 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
   #region Lifecycle
 
   private void Start() {
-    name = ToString();
     image.color = IsWhite ? White : Black;
     HighlightVisible = false;
     BorderVisible = false;
@@ -239,6 +238,7 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
   }
 
   private void Awake() {
+    name = ToString();
     image = GetComponent<Image>();
     defaultPieceIcon = pieceDisplay.icon.sprite;
     defaultPieceBorder = pieceDisplay.border.sprite;

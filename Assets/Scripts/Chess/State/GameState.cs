@@ -70,12 +70,13 @@ public sealed class GameState {
       var to = move.To;
 
       if (!piece.IsPawn) stringBuilder.Append(piece.Char);
-
-      var movesToSquare = moveSet.Moves.Where(move => move.To == to);
+      
+      var movesToSquare = Previous.MovesFor(Previous.BoardState.SideToMove).Where(move => move.To == to && move.Piece.PieceType == piece.PieceType);
+      //foreach (var m in movesToSquare) Debug.Log(m);
       if (movesToSquare.Count() > 1) {
-        if (BoardState.PiecesOnFile(from.File, piece.SideType, piece.PieceType) == 0)
+        if (Previous.BoardState.PiecesOnFile(from.File, piece.SideType, piece.PieceType) == 0)
           stringBuilder.Append(from.FileChar);
-        else if (BoardState.PiecesOnRank(from.Rank, piece.SideType, piece.PieceType) == 0)
+        else if (Previous.BoardState.PiecesOnRank(from.Rank, piece.SideType, piece.PieceType) == 0)
           stringBuilder.Append(from.Rank);
         else stringBuilder.Append(from.name);
       }

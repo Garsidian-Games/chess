@@ -17,6 +17,7 @@ public class UIController : MonoBehaviour {
 
   [System.Serializable]
   public class GUI {
+    public Button menuButton;
     public Button settingsButton;
     public OpponentsTurn opponentsTurn;
     public PlayersTurn playersTurn;
@@ -36,6 +37,11 @@ public class UIController : MonoBehaviour {
   [SerializeField] private Board board;
   [SerializeField] private DraggedPiece draggedPiece;
   [SerializeField] private GUI gui;
+  [SerializeField] private MenuWindow menuWindow;
+  [SerializeField] private GameObject resetGameWindow;
+  [SerializeField] private RecoverGameModal recoverGameModal;
+  [SerializeField] private ImportGameWindow importGameWindow;
+  [SerializeField] private ExportGameWindow exportGameWindow;
   [SerializeField] private PickPromotionModal pickPromotionModal;
   [SerializeField] private GameScoreWindow gameScoreWindow;
   [SerializeField] private SettingsWindow settingsWindow;
@@ -47,6 +53,8 @@ public class UIController : MonoBehaviour {
   private Player player;
 
   private Opponent opponent;
+
+  private PortableGameNotation savedGame;
 
   #endregion
 
@@ -79,9 +87,14 @@ public class UIController : MonoBehaviour {
   private void Sync() {
     bool isRoot = gameController.GameManager.GameState.BoardState.IsRoot;
     bool isMate = gameController.GameManager.GameState.IsMate;
+    bool canUndo = gameController.GameManager.CanUndo;
+
+    menuWindow.CanResetGame = !isRoot;
+    menuWindow.CanExportGame = canUndo;
+
     gui.readyCheckModal.Display(isRoot && !player.IsTurnToMove);
     gui.opponentsTurn.Display(!isMate && !player.IsTurnToMove);
-    gui.playersTurn.Display(!isMate && player.IsTurnToMove, gameController.GameManager.CanUndo, !isRoot);
+    gui.playersTurn.Display(!isMate && player.IsTurnToMove, canUndo, !isRoot);
 
     var captured = gameController.GameManager.GameState.BoardState.Captured;
     gui.sideStatusWhite.Display(captured);
@@ -100,6 +113,9 @@ public class UIController : MonoBehaviour {
       gui.sideStatusWhite.InCheck = gameController.GameManager.GameState.BoardState.WhiteInCheck;
       gui.sideStatusBlack.InCheck = gameController.GameManager.GameState.BoardState.BlackInCheck;
     }
+
+    gui.sideStatusWhite.Title = player.SideType == SideType.White ? "Player" : "Opponent";
+    gui.sideStatusBlack.Title = player.SideType == SideType.White ? "Opponent" : "Player";
   }
 
   #endregion
@@ -121,7 +137,17 @@ public class UIController : MonoBehaviour {
   }
 
   private void HandleGameReady() {
+    if (gameController.GameManager.HasSavedGame)
+      savedGame = new(board, gameController.GameManager.White, gameController.GameManager.Black, gameController.GameManager.SavedGame);
+
     Sync();
+    //Debug.Log(savedGame.IsValid);
+
+    if (savedGame != null && savedGame.IsValid && !savedGame.EndsInCheckmate) {
+      gui.readyCheckModal.Display(false);
+      recoverGameModal.Show();
+    }
+
     loadingScreen.SetActive(false);
   }
 
@@ -136,6 +162,7 @@ public class UIController : MonoBehaviour {
   private void HandlePlayerIsReady() {
     gui.opponentsTurn.IsThinking = true;
     opponent.IsUnlocked = true;
+    player.PlayGameMusic();
   }
 
   private void HandleUndone() {
@@ -148,6 +175,39 @@ public class UIController : MonoBehaviour {
 
   private void HandleDragEnd() {
     draggedPiece.Piece = null;
+  }
+
+  private void HandleResetGame() {
+    resetGameWindow.SetActive(true);
+  }
+
+  private void HandleExportGame() {
+    exportGameWindow.Show(gameController.GameManager.ToString());
+  }
+
+  private void HandleGameImported(PortableGameNotation pgn) {
+    gameController.GameManager.Import(pgn);
+    importGameWindow.Hide();
+    menuWindow.Hide();
+    Sync();
+    gui.readyCheckModal.Display(!player.IsTurnToMove);
+  }
+
+  private void HandleClearSave() {
+    savedGame = null;
+    gameController.GameManager.ClearSave();
+    recoverGameModal.Hide();
+    gui.readyCheckModal.Display(gameController.GameManager.GameState.BoardState.IsRoot && !player.IsTurnToMove);
+  }
+
+  private void HandleLoadSave() {
+    gameController.GameManager.RecoverSavedTimers(out float white, out float black);
+    gameController.GameManager.Import(savedGame, white, black);
+    savedGame = null;
+    recoverGameModal.Hide();
+    Sync();
+    gui.readyCheckModal.Display(!player.IsTurnToMove);
+    if (player.IsTurnToMove) player.PlayGameMusic();
   }
 
   #endregion
@@ -176,12 +236,23 @@ public class UIController : MonoBehaviour {
     gameController.GameManager.OnMoved.AddListener(HandleMoved);
     gameController.GameManager.OnUndone.AddListener(HandleUndone);
 
+    gui.menuButton.onClick.AddListener(menuWindow.Show);
     gui.settingsButton.onClick.AddListener(settingsWindow.Show);
     gui.playersTurn.OnUndo.AddListener(HandleUndo);
     gui.playersTurn.OnShowScore.AddListener(HandleShowScore);
     gui.readyCheckModal.OnReady.AddListener(HandlePlayerIsReady);
 
     gameOverModal.OnShowScore.AddListener(HandleShowScore);
+
+    menuWindow.OnNewGame.AddListener(HandleResetGame);
+    menuWindow.OnImportGame.AddListener(importGameWindow.Show);
+    menuWindow.OnExportGame.AddListener(HandleExportGame);
+
+    importGameWindow.OnImported.AddListener(HandleGameImported);
+    importGameWindow.Configure(board, gameController.GameManager.White, gameController.GameManager.Black);
+
+    recoverGameModal.OnCleared.AddListener(HandleClearSave);
+    recoverGameModal.OnLoaded.AddListener(HandleLoadSave);
   }
 
   private void Awake() {

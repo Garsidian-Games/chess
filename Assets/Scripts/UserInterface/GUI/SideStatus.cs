@@ -31,6 +31,11 @@ public class SideStatus : MonoBehaviour {
 
   #region Properties
 
+  public string Title {
+    get => title.text;
+    set => title.text = value;
+  }
+
   public Color BorderColor {
     get => border.color;
     set => border.color = value;

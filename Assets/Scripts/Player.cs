@@ -132,6 +132,10 @@ public class Player : MonoBehaviour {
 
   #region Methods
 
+  public void PlayGameMusic() {
+    gameController.AudioManager.PlayMusic(music.Game);
+  }
+
   public void ChoosePromotion(PieceType pieceType) {
     Assert.IsTrue(Piece.PromotionTypes.Contains(pieceType), string.Format("{0} is not a valid promotion type!", pieceType));
     Assert.IsNotNull(awaitingPromotion, "Not awaiting promotion!");
