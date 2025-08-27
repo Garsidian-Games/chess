@@ -63,6 +63,8 @@ public sealed class BoardState {
 
   #region Methods
 
+  public Piece PieceAt(int rank, int file) => this[this[rank, file]];
+
   public int PiecesOnFile(int file, SideType sideType, PieceType pieceType) {
     int count = 0;
     for (int rank = 0; rank < Board.Ranks; rank++) {

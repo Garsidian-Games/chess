@@ -46,8 +46,7 @@ public class Opponent : MonoBehaviour {
 
   [Header("Configuration")]
   [SerializeField] private Mode mode;
-  [SerializeField] private float thinkingTime = 3f;
-  [SerializeField] private int movesPerFrame = 128;
+  [SerializeField] private int searchDepth = 15;
 
   private Coroutine thinking;
 
@@ -56,9 +55,9 @@ public class Opponent : MonoBehaviour {
   private GameController gameController;
   private Player player;
 
-  private readonly Dictionary<GameState, Dictionary<Move, int>> scores = new();
-
   private int moveCounter;
+
+  private StockfishEngine engine;
 
   #endregion
 
@@ -143,14 +142,20 @@ public class Opponent : MonoBehaviour {
     );
   }
 
-  private int Score(GameState gameState, Move move) {
-    if (!scores.ContainsKey(gameState)) scores[gameState] = new();
-    if (!scores[gameState].ContainsKey(move)) scores[gameState][move] = CalculateScoreFor(gameState, move);
-    return scores[gameState][move];
-  }
+  private Move ConvertUciToMove(string uciMove, GameState gameState) {
+    // Extract start & destination squares from UCI string
+    int fromFile = uciMove[0] - 'a';
+    int fromRank = int.Parse(uciMove[1].ToString()) - 1;
+    int toFile = uciMove[2] - 'a';
+    int toRank = int.Parse(uciMove[3].ToString()) - 1;
 
-  private int CalculateScoreFor(GameState gameState, Move move) {
-    return Random.Range(int.MinValue, int.MaxValue);
+    Debug.LogFormat("{4}: {0}{1} -> {2}{3}", fromFile, fromRank, toFile, toRank, uciMove);
+    //foreach (var m in gameState.MovesFor(SideType)) Debug.Log(m);
+
+    return gameState.MovesFor(SideType).FirstOrDefault(move =>
+      move.From.File == fromFile && move.From.Rank == fromRank &&
+      move.To.File == toFile && move.To.Rank == toRank
+    );
   }
 
   #endregion
@@ -158,38 +163,57 @@ public class Opponent : MonoBehaviour {
   #region Coroutines
 
   private IEnumerator Think() {
-    float elapsed = 0f;
-
+    // 2. Get current FEN from your game state
     GameState gameState = gameController.GameManager.GameState;
-    Queue<Move> moves = new(gameState.MovesFor(SideType));
+    string fen = gameState.ToFEN(); // Assuming you have this. If not, I can help write it.
 
-    int? bestScore = null;
-    List<Move> bestMoves = null;
+    Debug.Log($"[Stockfish] Analyzing FEN: {fen}");
 
-    while (elapsed < thinkingTime) {
-      elapsed += Time.deltaTime;
+    // 3. Start Stockfish search at configured depth
+    engine.StartSearch(fen, searchDepth);
 
-      int count = 0;
-      while (moves.Count > 0) {
-        if (count >= movesPerFrame) break;
+    string bestMove;
+    int eval = 0;
 
-        var move = moves.Dequeue();
-        var score = Score(gameState, move);
-
-        if (!bestScore.HasValue || bestScore.Value < score) {
-          bestScore = score;
-          bestMoves = new() { move };
-        } else if (bestScore.Value == score) bestMoves.Add(move);
-
-        count++;
+    // 4. Wait until Stockfish reports "bestmove"
+    while (true) {
+      string line = engine.ReadLine();
+      if (string.IsNullOrEmpty(line)) {
+        yield return null;
+        continue;
       }
 
-      //if (moves.Count > 0) break;
-      yield return new WaitForEndOfFrame();
+      // Debug output from Stockfish if you want
+      // Debug.Log("[Stockfish] " + line);
+
+      // Parse centipawn evaluation from "info depth ... score cp"
+      if (line.StartsWith("info") && line.Contains("score cp")) {
+        string[] parts = line.Split(' ');
+        for (int i = 0; i < parts.Length; i++) {
+          if (parts[i] == "cp") {
+            int.TryParse(parts[i + 1], out eval);
+            Debug.Log($"[Stockfish Eval] {eval} cp");
+          }
+        }
+      }
+
+      // Parse the actual move from "bestmove"
+      if (line.StartsWith("bestmove")) {
+        string[] parts = line.Split(' ');
+        bestMove = parts[1];
+        break;
+      }
+
+      yield return null;
     }
 
-    Make(bestMoves[Random.Range(0, bestMoves.Count)]);
+    Debug.Log($"[Stockfish] Best Move = {bestMove}, Eval = {eval} cp");
 
+    // 5. Convert Stockfish UCI move into your Move type
+    Move moveToMake = ConvertUciToMove(bestMove, gameState);
+    Make(moveToMake);
+
+    // 6. Stop thinking
     StopThinking();
   }
 
@@ -221,6 +245,9 @@ public class Opponent : MonoBehaviour {
   private void Awake() {
     gameController = GameController.Instance;
     player = Player.Instance;
+
+    string stockfishPath = Application.streamingAssetsPath + "/Stockfish/Mac/stockfish/stockfish-macos-m1-apple-silicon";
+    engine = new StockfishEngine(stockfishPath);
   }
 
   #endregion

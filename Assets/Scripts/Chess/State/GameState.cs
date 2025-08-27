@@ -35,6 +35,10 @@ public sealed class GameState {
 
   public readonly BoardState BoardState;
 
+  public readonly int HalfmoveClock;
+
+  public readonly int FullmoveNumber;
+
   public bool InCheck => BoardState.InCheck;
 
   public bool IsMate => moveSet.IsMate;
@@ -117,11 +121,17 @@ public sealed class GameState {
     Previous = gameState;
     BoardState = gameState.BoardState.After(move, promotion);
     moveSet = new(BoardState);
+
+    if (BoardState.SideToMove == SideType.White) FullmoveNumber = gameState.FullmoveNumber + 1;
+    HalfmoveClock = move.IsCapture || move.Piece.IsPawn ? 0 : HalfmoveClock + 1;
   }
 
   public GameState(Board board, Side white, Side black) {
     BoardState = new(board, white, black);
     moveSet = new(BoardState);
+
+    HalfmoveClock = 0;
+    FullmoveNumber = 1;
   }
 
   #endregion
