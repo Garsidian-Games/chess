@@ -29,8 +29,11 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
   public class PieceDisplay {
     public Wobble wobble;
     public PulseScale pulse;
+    public Tremble tremble;
     public Image icon;
     public Image border;
+    public Image alertGreen;
+    public Image alertRed;
   }
 
   #endregion
@@ -157,6 +160,29 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
   public bool PulsePiece {
     get => pieceDisplay.pulse.enabled;
     set => pieceDisplay.pulse.enabled = value;
+  }
+
+  public bool TremblePiece {
+    get => pieceDisplay.tremble.enabled;
+    set => pieceDisplay.tremble.enabled = value;
+  }
+
+  public bool GreenAlert {
+    get => pieceDisplay.alertGreen.enabled;
+    set => pieceDisplay.alertGreen.enabled = value;
+  }
+
+  public bool RedAlert {
+    get => pieceDisplay.alertRed.enabled;
+    set => pieceDisplay.alertRed.enabled = value;
+  }
+
+  public bool ShowAlerts {
+    get => pieceDisplay.alertGreen.gameObject.activeSelf;
+    set {
+      pieceDisplay.alertGreen.gameObject.SetActive(value);
+      pieceDisplay.alertRed.gameObject.SetActive(value);
+    }
   }
 
   #endregion

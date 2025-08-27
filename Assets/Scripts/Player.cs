@@ -155,8 +155,18 @@ public class Player : MonoBehaviour {
       var whiteCount = coverages.Count(c => c.Piece.IsWhite);
       var blackCount = coverages.Count(c => c.Piece.IsBlack);
 
+      square.GreenAlert = false;
+      square.RedAlert = false;
       square.PlayerCoverageOpacity = CoverageOpacityFor(IsWhite ? whiteCount : blackCount);
       square.OpponentCoverageOpacity = CoverageOpacityFor(IsWhite ? blackCount : whiteCount);
+    }
+
+    if (!IsTurnToMove) return;
+
+    foreach (var move in gameController.GameManager.GameState.MovesFor(gameController.GameManager.GameState.BoardState.SideToMove)) {
+      if (!move.IsCapture) continue;
+      move.From.GreenAlert = true;
+      move.To.RedAlert = true;
     }
   }
 
@@ -166,8 +176,10 @@ public class Player : MonoBehaviour {
     draggedMoves = null;
 
     foreach (var square in uiController.Board.Squares) {
+      square.ShowAlerts = true;
       square.ScreenVisible = false;
       square.BorderVisible = false;
+      square.TremblePiece = false;
       square.ResetPieceBorderColor();
     }
 
@@ -180,14 +192,19 @@ public class Player : MonoBehaviour {
     clickedAt = null;
     clearedAt = Time.time;
     foreach (var square in uiController.Board.Squares) {
+      square.ShowAlerts = true;
       square.WobblePiece = false;
       square.PulsePiece = false;
+      square.TremblePiece = false;
       square.BorderVisible = false;
       square.HighlightVisible = false;
       square.TargetVisible = false;
       square.ResetPieceBorderColor();
     }
-    SyncCoverage();
+  }
+
+  private void HideAlerts() {
+    foreach (var square in uiController.Board.Squares) square.ShowAlerts = false;
   }
 
   private void Click(Piece piece, Square square) {
@@ -211,6 +228,7 @@ public class Player : MonoBehaviour {
       Clicked = square;
       Clicked.PieceBorderColor = _borderColor;
       Clicked.PulsePiece = true;
+      HideAlerts();
       foreach (var coverage in coverages) coverage.To.HighlightVisible = true;
       return;
     }
@@ -222,7 +240,11 @@ public class Player : MonoBehaviour {
     Clicked = square;
     Clicked.PieceBorderColor = _borderColor;
     Clicked.WobblePiece = true;
-    foreach (var move in moves) move.To.TargetColor = targetColor;
+    HideAlerts();
+    foreach (var move in moves) {
+      move.To.TargetColor = targetColor;
+      move.To.TremblePiece = true;
+    }
   }
 
   private void Click(Square square) {
@@ -235,6 +257,7 @@ public class Player : MonoBehaviour {
     clearedAt = null;
     Clicked = square;
     Clicked.BorderColor = borderColor.Inspected;
+    HideAlerts();
     foreach (var coverage in coverages) {
       coverage.From.PieceBorderColor = borderColor.Inspected;
       coverage.From.PulsePiece = true;
@@ -259,6 +282,10 @@ public class Player : MonoBehaviour {
 
   private void Make(Move move, AudioResource moveSound) {
     if (move.IsPromotion) {
+      // pre-promotion preview
+      move.From.Piece = null;
+      move.To.Piece = move.Piece;
+
       gameController.AudioManager.PlaySound(sound.Promotion);
       awaitingPromotion = move;
       OnBeforePromotion.Invoke();
@@ -343,12 +370,18 @@ public class Player : MonoBehaviour {
       return;
     }
 
+    HideAlerts();
+
     Dragged = piece;
     draggedMoves = moves;
     gameController.AudioManager.PlaySound(sound.DragPickup);
     OnDragStart.Invoke(Dragged);
 
-    foreach (var s in uiController.Board.Squares) s.ScreenVisible = !moves.Any(move => move.To == s);
+    foreach (var s in uiController.Board.Squares) {
+      bool hasMove = moves.Any(move => move.To == s);
+      s.ScreenVisible = !hasMove;
+      s.TremblePiece = hasMove;
+    }
   }
 
   private void HandleSquareDragEnded(Square square) {

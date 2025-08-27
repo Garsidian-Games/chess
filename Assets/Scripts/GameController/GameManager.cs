@@ -122,6 +122,7 @@ public class GameManager : MonoBehaviour {
     GameState = GameState.MakeMove(move, promotion);
     uiController.Board.Render(GameState);
 
+    gameTimer = timer;
     timers[GameState] = timer;
     turnTimer = 0f;
 

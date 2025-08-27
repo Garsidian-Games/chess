@@ -128,7 +128,6 @@ public class Opponent : MonoBehaviour {
   }
 
   private void StopThinking() {
-    Debug.Log("StopThinking");
     if (!IsThinking) return;
     StopCoroutine(thinking);
     thinking = null;
@@ -185,8 +184,8 @@ public class Opponent : MonoBehaviour {
         count++;
       }
 
-      //if (moves.Count > 0)
-        yield return new WaitForEndOfFrame();
+      //if (moves.Count > 0) break;
+      yield return new WaitForEndOfFrame();
     }
 
     Make(bestMoves[Random.Range(0, bestMoves.Count)]);
