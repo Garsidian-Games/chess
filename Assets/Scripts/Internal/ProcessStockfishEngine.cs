@@ -3,13 +3,13 @@ using System.Diagnostics;
 using System.IO;
 using UnityEngine;
 
-public class StockfishEngine : IDisposable {
+public class ProcessStockfishEngine : IStockfishEngine {
   private Process process;
   private StreamWriter input;
   private StreamReader output;
   private bool debugLogging = false; // Toggle debugging easily
 
-  public StockfishEngine(string pathToBinary) {
+  public ProcessStockfishEngine(string pathToBinary) {
     if (debugLogging)
       UnityEngine.Debug.Log($"[Stockfish] Launching engine at: {pathToBinary}");
 

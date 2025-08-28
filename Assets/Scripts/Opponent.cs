@@ -57,7 +57,7 @@ public class Opponent : MonoBehaviour {
 
   private int moveCounter;
 
-  private StockfishEngine engine;
+  private IStockfishEngine engine;
 
   #endregion
 
@@ -158,6 +158,15 @@ public class Opponent : MonoBehaviour {
     );
   }
 
+  private static IStockfishEngine CreateEngine() {
+#if UNITY_IOS && !UNITY_EDITOR
+    return new NativeStockfishEngineIOS();
+#elif UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
+    string stockfishPath = Application.streamingAssetsPath + "/Stockfish/Mac/stockfish/stockfish-macos-m1-apple-silicon";
+    return new ProcessStockfishEngine(stockfishPath);
+#endif
+  }
+
   #endregion
 
   #region Coroutines
@@ -245,9 +254,7 @@ public class Opponent : MonoBehaviour {
   private void Awake() {
     gameController = GameController.Instance;
     player = Player.Instance;
-
-    string stockfishPath = Application.streamingAssetsPath + "/Stockfish/Mac/stockfish/stockfish-macos-m1-apple-silicon";
-    engine = new StockfishEngine(stockfishPath);
+    engine = CreateEngine();
   }
 
   #endregion
