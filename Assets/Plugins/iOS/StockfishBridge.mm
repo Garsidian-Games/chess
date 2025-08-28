@@ -200,15 +200,15 @@ struct Engine {
                 guard.cin_old  = std::cin.rdbuf(in.rdbuf());
                 guard.cout_old = std::cout.rdbuf(out.rdbuf());
                 
-                {
-                    std::string nn = FindNNUEPathInBundle();
-                    if (!nn.empty()) {
-                        Trace(q, "nn found");
-                        Trace(q, nn.c_str());
-                        std::lock_guard<std::mutex> lk(q.m);
-                        q.in_lines.emplace(std::string("setoption name EvalFile value ") + nn);
-                    }
-                }
+//                {
+//                    std::string nn = FindNNUEPathInBundle();
+//                    if (!nn.empty()) {
+//                        Trace(q, "nn found");
+//                        Trace(q, nn.c_str());
+//                        std::lock_guard<std::mutex> lk(q.m);
+//                        q.in_lines.emplace(std::string("setoption name EvalFile value ") + nn);
+//                    }
+//                }
                 q.cv_in.notify_all();
                 Trace(q, "pre-loop commands queued");
                 
