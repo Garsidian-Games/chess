@@ -181,42 +181,14 @@ public class Opponent : MonoBehaviour {
     // 3. Start Stockfish search at configured depth
     engine.StartSearch(fen, searchDepth);
 
-    string bestMove;
-    int eval = 0;
-
     // 4. Wait until Stockfish reports "bestmove"
-    while (true) {
-      string line = engine.ReadLine();
-      if (string.IsNullOrEmpty(line)) {
-        yield return null;
-        continue;
-      }
-
-      // Debug output from Stockfish if you want
-      // Debug.Log("[Stockfish] " + line);
-
-      // Parse centipawn evaluation from "info depth ... score cp"
-      if (line.StartsWith("info") && line.Contains("score cp")) {
-        string[] parts = line.Split(' ');
-        for (int i = 0; i < parts.Length; i++) {
-          if (parts[i] == "cp") {
-            int.TryParse(parts[i + 1], out eval);
-            Debug.Log($"[Stockfish Eval] {eval} cp");
-          }
-        }
-      }
-
-      // Parse the actual move from "bestmove"
-      if (line.StartsWith("bestmove")) {
-        string[] parts = line.Split(' ');
-        bestMove = parts[1];
-        break;
-      }
-
+    while (!engine.HasBestMove) {
+      engine.Update();
       yield return null;
     }
 
-    Debug.Log($"[Stockfish] Best Move = {bestMove}, Eval = {eval} cp");
+    string bestMove = engine.BestMove;
+    Debug.Log($"[Stockfish] Best Move = {bestMove}");
 
     // 5. Convert Stockfish UCI move into your Move type
     Move moveToMake = ConvertUciToMove(bestMove, gameState);

@@ -57,6 +57,7 @@ public class GameController : MonoBehaviour {
   #region Lifecycle
 
   private void Start() {
+    Debug.Log("GameController");
     if (GameManager.IsReady) ReadyUp();
     else GameManager.OnReady.AddListener(ReadyUp);
   }

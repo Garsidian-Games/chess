@@ -9,6 +9,18 @@ public class ProcessStockfishEngine : IStockfishEngine {
   private StreamReader output;
   private bool debugLogging = false; // Toggle debugging easily
 
+  private string bestMove;
+
+  public bool HasBestMove => !string.IsNullOrEmpty(bestMove);
+  public string BestMove {
+    get {
+      if (!HasBestMove) return null;
+      var _bestMove = bestMove;
+      bestMove = null;
+      return _bestMove;
+    }
+  }
+
   public ProcessStockfishEngine(string pathToBinary) {
     if (debugLogging)
       UnityEngine.Debug.Log($"[Stockfish] Launching engine at: {pathToBinary}");
@@ -40,6 +52,19 @@ public class ProcessStockfishEngine : IStockfishEngine {
     if (debugLogging) UnityEngine.Debug.Log("[Stockfish] Engine initialized and ready!");
   }
 
+  public void Update() {
+    string line = ReadLine();
+    if (string.IsNullOrEmpty(line)) return;
+
+    if (debugLogging) UnityEngine.Debug.Log("[Stockfish] " + line);
+
+    // Parse the actual move from "bestmove"
+    if (line.StartsWith("bestmove")) {
+      string[] parts = line.Split(' ');
+      bestMove = parts[1];
+    }
+  }
+
   private void SendCommand(string command) {
     if (debugLogging)
       UnityEngine.Debug.Log($"[Stockfish →] {command}");
@@ -62,6 +87,8 @@ public class ProcessStockfishEngine : IStockfishEngine {
   /// Start Stockfish analysis at the given depth using FEN.
   /// </summary>
   public void StartSearch(string fen, int depth) {
+    bestMove = null;
+
     if (debugLogging) {
       UnityEngine.Debug.Log($"[Stockfish] Starting search...");
       UnityEngine.Debug.Log($"[Stockfish] FEN: {fen}");

@@ -43,7 +43,7 @@ MonoBehaviour:
     width: 1728
     height: 974
   m_ShowMode: 4
-  m_Title: Hierarchy
+  m_Title: Project
   m_RootView: {fileID: 5}
   m_MinSize: {x: 875, y: 300}
   m_MaxSize: {x: 10000, y: 10000}
@@ -97,7 +97,7 @@ MonoBehaviour:
   m_MinSize: {x: 725, y: 426}
   m_MaxSize: {x: 4000, y: 4026}
   vertical: 0
-  controlID: 16320
+  controlID: 34
   draggingID: 0
 --- !u!114 &5
 MonoBehaviour:
@@ -194,7 +194,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 100}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 0
-  controlID: 17
+  controlID: 91
   draggingID: 0
 --- !u!114 &9
 MonoBehaviour:
@@ -220,7 +220,7 @@ MonoBehaviour:
   m_MinSize: {x: 200, y: 100}
   m_MaxSize: {x: 16192, y: 16192}
   vertical: 1
-  controlID: 18
+  controlID: 92
   draggingID: 0
 --- !u!114 &10
 MonoBehaviour:
@@ -246,7 +246,7 @@ MonoBehaviour:
   m_MinSize: {x: 200, y: 50}
   m_MaxSize: {x: 16192, y: 8096}
   vertical: 0
-  controlID: 19
+  controlID: 45
   draggingID: 0
 --- !u!114 &11
 MonoBehaviour:
@@ -486,16 +486,16 @@ MonoBehaviour:
   m_ViewMode: 1
   m_StartGridSize: 16
   m_LastFolders:
-  - Assets/Plugins/iOS/include
+  - Assets/Plugins/iOS
   m_LastFoldersGridSize: 16
   m_LastProjectPath: /Users/garside/Games/chess
   m_LockTracker:
     m_IsLocked: 0
   m_FolderTreeState:
-    scrollPos: {x: 0, y: 0}
-    m_SelectedIDs: 4a770300
-    m_LastClickedID: 227146
-    m_ExpandedIDs: 0000000012c3000014c3000016c3000018c300001ac300001cc300001ec3000020c3000022c3000024c3000026c3000028c300002ac300002cc30000
+    scrollPos: {x: 0, y: 191}
+    m_SelectedIDs: aec30000
+    m_LastClickedID: 50094
+    m_ExpandedIDs: 0000000010c3000012c3000014c3000016c3000018c300001ac300001cc300001ec3000020c3000022c3000024c3000026c3000028c300002ac300002cc30000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -524,7 +524,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: 0000000012c3000014c3000016c3000018c300001ac300001cc300001ec3000020c3000022c3000024c3000026c3000028c300002ac300002cc30000
+    m_ExpandedIDs: 0000000010c3000012c3000014c3000016c3000018c300001ac300001cc300001ec3000020c3000022c3000024c3000026c3000028c300002ac300002cc30000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -623,7 +623,7 @@ MonoBehaviour:
       scrollPos: {x: 0, y: 0}
       m_SelectedIDs: 
       m_LastClickedID: 0
-      m_ExpandedIDs: 1679f9ff487af9ff367df9ffc284f9fff485f9ffe288f9ff9490f9ffc691f9ffe494f9ff66a0f9ff98a1f9ff86a4f9ff12acf9ff44adf9ff62b0f9ffaabbf9ffcebcf9fff6bff9ffb2cbf9ffd6ccf9ffc4cff9ff6cd9f9ff90daf9ff7eddf9ffa4e5f9ffc8e6f9ffc0e9f9ff82f1f9ffa6f2f9ffcef5f9ff7601faffa002faffc805faffe63cfbff0a3efbff2841fbff9058ffff9258ffff9458ffff9658ffff9a58ffff08fbffff22b4000050b5000028b7000062b700008cb700002ebd0000
+      m_ExpandedIDs: f233feff2435feff1238feff9e3ffeffd040feffbe43feff5c4bfeff8e4cfeff7c4ffeff0857feff3a58feff285bfeffb462feffe663feffd466feff6e6efeffa06ffeff8e72feff747afeffa67bfeff9e7efeffcc86fefffe87feffec8afeff9e92feffd093feffee96feff3ea2feff70a3feff98a6feff6cc9feff9ecafeffc6cdfeff54dffeff86e0feffaee3feff5ef2feff90f3feff88f6feff58fefeff8afffeffa802ffff600effff920fffff8012ffff0c1affff3e1bffff2c1effffb825ffffea26ffffd829fffffe31ffff3033ffff4e36ffff446effff766fffff6472ffff267affff587bffff467efffff885ffff2a87ffff188affffca91fffffc92ffffea95ffffa49dffffd69effffc4a1ffff50a9ffff82aaffff70adffff60b5ffff92b6ffff80b9ffff32c1ffff64c2ffff52c5ffff44cdffff76ceffff64d1ffff16d9ffff48daffff36ddffff72e5ffffa4e6ffff92e9ffff1ef1ffff50f2ffff6ef5ffff08fbffff
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 

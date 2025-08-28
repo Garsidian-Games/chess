@@ -1,4 +1,6 @@
 public interface IStockfishEngine : System.IDisposable {
+  bool HasBestMove { get; }
+  string BestMove { get; }
   void StartSearch(string fen, int depth);
-  string ReadLine(); // returns null/empty when no new line
+  void Update();
 }
