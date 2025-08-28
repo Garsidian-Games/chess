@@ -7,6 +7,8 @@
 #include "tt.h"
 #include "uci.h"
 #include <sstream>
+#include <cstdlib>
+#include <cstring>
 
 namespace StockfishBridge {
 struct Queues {
@@ -221,7 +223,7 @@ struct Engine {
     }
     
     void stop() {
-        if (q.running.exchange(false)) return;
+        if (!q.running.exchange(false)) return;
         { std::lock_guard<std::mutex> lk(q.m); q.in_lines.emplace("quit"); }
         q.cv_in.notify_all();
         if (t.joinable()) t.join();
@@ -231,9 +233,9 @@ struct Engine {
     }
 
     void send(const char* line) {
-        if (!line) return;
-        { std::lock_guard<std::mutex> lk(q.m); q.in_lines.emplace(line); }
-        q.cv_in.notify_all();
+        if (!line || !*line) return;
+       { std::lock_guard<std::mutex> lk(q.m); q.in_lines.emplace(line); }
+       q.cv_in.notify_all();
     }
 
     const char* poll() {
@@ -270,9 +272,18 @@ void _stockfish_send(const char* cmd) {
     engine->send(cmd);
 }
 
-const char* _stockfish_read() {
+int _stockfish_read_copy(char* dst, int maxLen) {
     using namespace StockfishBridge;
-    if (!engine) return nullptr;
-    return engine->poll();
+    if (!engine || !dst || maxLen <= 1) return 0;
+    std::string line;
+    { std::lock_guard<std::mutex> lk(engine->q.m);
+      if (engine->q.out_lines.empty()) return 0;
+      line = std::move(engine->q.out_lines.front());
+      engine->q.out_lines.pop();
+    }
+    int n = (int)std::min<size_t>((size_t)maxLen - 1, line.size());
+    if (n > 0) std::memcpy(dst, line.data(), n);
+    dst[n] = '\0';
+    return n;
 }
 }

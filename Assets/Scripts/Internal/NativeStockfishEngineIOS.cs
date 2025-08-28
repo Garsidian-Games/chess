@@ -16,7 +16,7 @@ public class NativeStockfishEngineIOS : IStockfishEngine {
   [DllImport("__Internal")] private static extern void _stockfish_start();
   [DllImport("__Internal")] private static extern void _stockfish_stop();
   [DllImport("__Internal")] private static extern void _stockfish_send(string cmd);
-  [DllImport("__Internal")] private static extern IntPtr _stockfish_read();
+  [DllImport("__Internal")] static extern int _stockfish_read_copy([Out] byte[] dst, int maxLen);
 
   #endregion
 
@@ -26,6 +26,7 @@ public class NativeStockfishEngineIOS : IStockfishEngine {
   private static bool engineRunning;
   //private static float nextPollTime;
 
+  static readonly byte[] _buf = new byte[4096];
 
   private bool debugLogging = true;
 
@@ -62,7 +63,7 @@ public class NativeStockfishEngineIOS : IStockfishEngine {
     engineRunning = false;
 
     // drain any stragglers
-    while (PollOnce(out _)) { }
+    while (PollCopy(out _)) { }
     while (output.TryDequeue(out _)) { }
 
     if (debugLogging) Debug.Log("[Stockfish] Engine closed successfully.");
@@ -102,22 +103,15 @@ public class NativeStockfishEngineIOS : IStockfishEngine {
 
     const int kMaxPerPump = 64;
     int n = 0;
-    while (n++ < kMaxPerPump && PollOnce(out var s)) output.Enqueue(s);
+    while (n++ < kMaxPerPump && PollCopy(out var s)) output.Enqueue(s);
 
     //if (POLL_INTERVAL > 0f) nextPollTime = Time.realtimeSinceStartup + POLL_INTERVAL;
   }
 
-  private static bool PollOnce(out string line) {
-    line = null;
-    var ptr = _stockfish_read();
-    if (ptr == IntPtr.Zero) return false;
-    try {
-      line = Marshal.PtrToStringAnsi(ptr);
-    } catch {
-      // Defensive: if decoding fails, drop the line instead of throwing.
-      line = null;
-    }
-    return !string.IsNullOrEmpty(line);
+  private static bool PollCopy(out string s) {
+    int n = _stockfish_read_copy(_buf, _buf.Length);
+    s = n > 0 ? System.Text.Encoding.ASCII.GetString(_buf, 0, n) : null;
+    return s != null;
   }
 
   private string ReadLine() {
