@@ -162,7 +162,7 @@ public class Opponent : MonoBehaviour {
 #if UNITY_IOS && !UNITY_EDITOR
     return new NativeStockfishEngineIOS();
 #elif UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
-    string stockfishPath = Application.streamingAssetsPath + "/Stockfish/Mac/stockfish/stockfish-macos-m1-apple-silicon";
+    string stockfishPath = Application.dataPath + "/Editor/Stockfish/Mac/stockfish/stockfish-macos-m1-apple-silicon";
     return new ProcessStockfishEngine(stockfishPath);
 #endif
   }
@@ -172,6 +172,9 @@ public class Opponent : MonoBehaviour {
   #region Coroutines
 
   private IEnumerator Think() {
+    // 1. Create engine if none exists
+    if (engine == null) engine = CreateEngine();
+
     // 2. Get current FEN from your game state
     GameState gameState = gameController.GameManager.GameState;
     string fen = gameState.ToFEN(); // Assuming you have this. If not, I can help write it.
@@ -226,7 +229,6 @@ public class Opponent : MonoBehaviour {
   private void Awake() {
     gameController = GameController.Instance;
     player = Player.Instance;
-    engine = CreateEngine();
   }
 
   #endregion
