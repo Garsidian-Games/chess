@@ -22,9 +22,10 @@ public class NativeStockfishEngineIOS : IStockfishEngine {
 
   #region Fields
 
-  private static readonly ConcurrentQueue<string> output = new ConcurrentQueue<string>();
+  private static readonly ConcurrentQueue<string> output = new();
   private static bool engineRunning;
   //private static float nextPollTime;
+
 
   private bool debugLogging = true;
 
@@ -128,6 +129,13 @@ public class NativeStockfishEngineIOS : IStockfishEngine {
     return null;
   }
 
+  private void WaitFor(string expected) {
+    string line;
+    while ((line = ReadLine()) != null) {
+      if (line.Contains(expected)) break;
+    }
+  }
+
   #endregion
 
   #region Coroutines
@@ -150,11 +158,11 @@ public class NativeStockfishEngineIOS : IStockfishEngine {
     if (debugLogging) Debug.Log("[Stockfish] Engine started!");
 
     // handled in brdige
-    //SendCommand("uci");
-    //SendCommand("isready");
-    //WaitFor("readyoxk");
+    SendCommand("uci");
+    SendCommand("isready");
+    WaitFor("readyok");
 
-    //if (debugLogging) Debug.Log("[Stockfish] Engine initialized and ready!");
+    if (debugLogging) Debug.Log("[Stockfish] Engine initialized and ready!");
   }
 
   #endregion
