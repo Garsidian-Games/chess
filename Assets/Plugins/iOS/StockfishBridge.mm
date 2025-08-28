@@ -12,12 +12,12 @@
 
 @interface Stockfish : NSObject
 - (instancetype)initWithTalksTo:(id)delegate;
-- (void)setPositionAndEvaluate:(NSString*)cmd;   // e.g. "position ..."/"go ..."
-- (void)send:(NSString*)uci;                     // generic UCI sender (fallback)
+- (void)send:(NSString*)uci;
 @end
 // ------------------------------------------------------------------------------
 
 static id g_engine = nil;
+static std::atomic_bool g_isReady{false};
 static std::string g_lastBest;
 static std::atomic_bool g_hasBest{false};
 static std::mutex g_mtx;
@@ -28,7 +28,10 @@ static std::mutex g_mtx;
 
 @implementation SFUnityDelegate
 - (void)info:(NSString*)line {
-    // Optional: NSLog(@"SF info: %@", line);
+    NSLog(@"SF info: %@", line);
+    if ([line rangeOfString:@"readyok"].location != NSNotFound) {
+        g_isReady.store(true, std::memory_order_release);
+    }
 }
 - (void)bestmove:(NSString*)line {
     std::lock_guard<std::mutex> lk(g_mtx);
@@ -55,9 +58,7 @@ static void sf_internal_init() {
 
 static void sf_send_objc(NSString* cmd) {
     if (!g_engine) sf_internal_init();
-    if ([g_engine respondsToSelector:@selector(setPositionAndEvaluate:)]) {
-        [g_engine performSelector:@selector(setPositionAndEvaluate:) withObject:cmd];
-    } else if ([g_engine respondsToSelector:@selector(send:)]) {
+    if ([g_engine respondsToSelector:@selector(send:)]) {
         [g_engine performSelector:@selector(send:) withObject:cmd];
     }
 }
@@ -72,23 +73,12 @@ void sf_send(const char* uci) {
     sf_send_objc([NSString stringWithUTF8String:uci]);
 }
 
-// Convenience helpers
-void sf_ucinewgame() { sf_send("ucinewgame"); }
-void sf_isready()     { sf_send("isready"); }
-
-// Position helpers
-void sf_position_startpos_with_moves(const char* moves) {
-    // moves: e.g. "e2e4 e7e5 g1f3"
-    std::string cmd = std::string("position startpos");
-    if (moves && moves[0]) { cmd += " moves "; cmd += moves; }
-    sf_send(cmd.c_str());
+void sf_clear_ready() {
+    g_isReady.store(false, std::memory_order_release);
 }
 
-// Search helpers
-void sf_go_depth(int depth) {
-    char buf[32];
-    snprintf(buf, sizeof(buf), "go depth %d", depth);
-    sf_send(buf);
+int sf_is_ready() {
+    return g_isReady.load(std::memory_order_acquire) ? 1 : 0;
 }
 
 // Polling bestmove result
