@@ -35,13 +35,15 @@ public sealed class CoverageMap {
 
   public Coverage[] Coverages => coverages.ToArray();
 
-  public Coverage[] this[Square square] => coverages.Where(c => c.To == square).ToArray();
-
   public Coverage[] this[Piece piece, Square square] => coverages.Where(c => c.Piece == piece && c.From == square).ToArray();
 
   #endregion
 
   #region Methods
+
+  public Coverage[] To(Square square) => coverages.Where(c => c.To == square).ToArray();
+
+  public Coverage[] From(Square square) => coverages.Where(c => c.From == square).ToArray();
 
   public bool InCheck(SideType sideType) {
     return sideType switch {

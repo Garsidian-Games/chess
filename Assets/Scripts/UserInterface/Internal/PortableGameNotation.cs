@@ -58,9 +58,13 @@ public sealed class PortableGameNotation {
     bool isInvalid = false;
     Queue<string> parts = new(pgn.Split(" "));
     //Debug.Log(string.Join(":", pgn.Split(" ")));
+    if (parts.Count == 0) isInvalid = true;
     while (parts.Count > 0) {
       var str = parts.Dequeue();
-      if (string.IsNullOrWhiteSpace(str)) break;
+      if (string.IsNullOrWhiteSpace(str)) {
+        // Debug.Log("Trailing whitespace");
+        break;
+      }
 
       string moveStr;
       if (str.Contains('.')) {
@@ -70,6 +74,11 @@ public sealed class PortableGameNotation {
       } else moveStr = str;
 
       //Debug.Log(moveStr);
+      if (moveStr.Length < 2) {
+        isInvalid = true;
+        Debug.Log("Malformed text");
+        break;
+      }
 
       var lastCharacter = moveStr.Last();
       if (lastCharacter == '#') {
@@ -101,8 +110,6 @@ public sealed class PortableGameNotation {
         move = moves.FirstOrDefault(move => move.IsCastleQS);
         if (move == null) {
           isInvalid = true;
-          Debug.Log("Missing Queen Side Castle");
-          break;
         }
         GameState = GameState.MakeMove(move);
         continue;
@@ -142,6 +149,11 @@ public sealed class PortableGameNotation {
         }
       } else {
         isCapture = false;
+        if (moveStr.Length < 2) {
+          isInvalid = true;
+          Debug.Log("Malformed text");
+          break;
+        }
         squareName = moveStr[^2..];
         moveStr = moveStr[..^2];
       }

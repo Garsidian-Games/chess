@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
 public class UIController : MonoBehaviour {
   #region Constants
@@ -55,6 +56,10 @@ public class UIController : MonoBehaviour {
   private Opponent opponent;
 
   private PortableGameNotation savedGame;
+
+  private readonly Dictionary<GameState, Move> hints = new();
+
+  private bool gettingHint;
 
   #endregion
 
@@ -137,9 +142,10 @@ public class UIController : MonoBehaviour {
   }
 
   private void HandleGameReady() {
+    Debug.Log(gameController.GameManager.HasSavedGame);
     if (gameController.GameManager.HasSavedGame)
       savedGame = new(board, gameController.GameManager.White, gameController.GameManager.Black, gameController.GameManager.SavedGame);
-
+    //Debug.Log(savedGame);
     Sync();
     //Debug.Log(savedGame.IsValid);
 
@@ -153,6 +159,18 @@ public class UIController : MonoBehaviour {
 
   private void HandleUndo() {
     gameController.GameManager.Undo();
+  }
+
+  private void HandleHint() {
+    if (gettingHint) return;
+    if (!player.IsTurnToMove) return;
+
+    if (hints.ContainsKey(gameController.GameManager.GameState)) player.ToggleHint(hints[gameController.GameManager.GameState]);
+    else {
+      gettingHint = true;
+      gui.playersTurn.HintBusy = true;
+      gameController.StockfishMananger.StartSearch(gameController.GameManager.GameState.ToFEN());
+    }
   }
 
   private void HandleShowScore() {
@@ -214,6 +232,16 @@ public class UIController : MonoBehaviour {
 
   #region Lifecycle
 
+  private void Update() {
+    if (!gettingHint) return;
+    if (!gameController.StockfishMananger.HasBestMove) return;
+    var hint = gameController.GameManager.GameState.ConvertUciToMove(gameController.StockfishMananger.BestMove, player.SideType);
+    gettingHint = false;
+    gui.playersTurn.HintBusy = false;
+    hints[gameController.GameManager.GameState] = hint;
+    player.ToggleHint(hint);
+  }
+
   private void LateUpdate() {
     gui.sideStatusWhite.ElapsedTime = gameController.GameManager.WhiteTimer;
     gui.sideStatusBlack.ElapsedTime = gameController.GameManager.BlackTimer;
@@ -239,6 +267,7 @@ public class UIController : MonoBehaviour {
     gui.menuButton.onClick.AddListener(menuWindow.Show);
     gui.settingsButton.onClick.AddListener(settingsWindow.Show);
     gui.playersTurn.OnUndo.AddListener(HandleUndo);
+    gui.playersTurn.OnHint.AddListener(HandleHint);
     gui.playersTurn.OnShowScore.AddListener(HandleShowScore);
     gui.readyCheckModal.OnReady.AddListener(HandlePlayerIsReady);
 

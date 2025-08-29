@@ -135,28 +135,6 @@ struct RdbufGuard {
     }
 };
 
-static std::string FindNNUEPathInBundle() {
-    @autoreleasepool {
-        NSBundle *bundle = [NSBundle mainBundle];
-        NSString *resPath = [bundle resourcePath];
-        NSFileManager *fm = [NSFileManager defaultManager];
-
-        // Unity copies StreamingAssets -> Data/Raw
-        NSString *raw = [resPath stringByAppendingPathComponent:@"Data/Raw"];
-        NSArray<NSString*> *paths = @[resPath, raw];
-        for (NSString *root in paths) {
-            NSArray<NSString*> *contents = [fm contentsOfDirectoryAtPath:root error:nil];
-            for (NSString *name in contents) {
-                if ([[name pathExtension].lowercaseString isEqualToString:@"nnue"]) {
-                    NSString *full = [root stringByAppendingPathComponent:name];
-                    return std::string([full UTF8String]);
-                }
-            }
-        }
-    }
-    return {};
-}
-
 static void Trace(Queues& q, const char* msg) {
     std::lock_guard<std::mutex> lk(q.m);
     q.out_lines.emplace(std::string("info string [bridge] ") + msg);
@@ -200,15 +178,6 @@ struct Engine {
                 guard.cin_old  = std::cin.rdbuf(in.rdbuf());
                 guard.cout_old = std::cout.rdbuf(out.rdbuf());
                 
-//                {
-//                    std::string nn = FindNNUEPathInBundle();
-//                    if (!nn.empty()) {
-//                        Trace(q, "nn found");
-//                        Trace(q, nn.c_str());
-//                        std::lock_guard<std::mutex> lk(q.m);
-//                        q.in_lines.emplace(std::string("setoption name EvalFile value ") + nn);
-//                    }
-//                }
                 q.cv_in.notify_all();
                 Trace(q, "pre-loop commands queued");
                 

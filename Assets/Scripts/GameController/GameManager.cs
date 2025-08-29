@@ -63,6 +63,7 @@ public class GameManager : MonoBehaviour {
   [HideInInspector] public UnityEvent OnReady;
   [HideInInspector] public MoveEvent OnMoved;
   [HideInInspector] public UnityEvent OnUndone;
+  [HideInInspector] public UnityEvent OnImported;
 
   #endregion
 
@@ -118,6 +119,7 @@ public class GameManager : MonoBehaviour {
   #region Methods
 
   public void ClearSave() {
+    //Debug.Log("ClearSave");
     PlayerPrefs.DeleteKey(SavedGameKey);
     PlayerPrefs.DeleteKey(SavedGameTimerKey_White);
     PlayerPrefs.DeleteKey(SavedGameTimerKey_Black);
@@ -153,6 +155,7 @@ public class GameManager : MonoBehaviour {
     gameTimer = timers[pgn.GameState];
     GameState = pgn.GameState;
     uiController.Board.Render(GameState);
+    OnImported.Invoke();
     Save();
   }
 
@@ -162,7 +165,7 @@ public class GameManager : MonoBehaviour {
     GameState = GameState.Previous.Previous;
     uiController.Board.Render(GameState);
 
-    gameTimer = timers[GameState];
+    gameTimer = timers.ContainsKey(GameState) ? timers[GameState] : new(0f, 0f);
     turnTimer = 0f;
 
     OnUndone.Invoke();
@@ -186,9 +189,11 @@ public class GameManager : MonoBehaviour {
   private void Save() {
     if (GameState.IsMate) ClearSave();
     else {
+      //Debug.Log("Save");
       PlayerPrefs.SetString(SavedGameKey, ToString());
       PlayerPrefs.SetFloat(SavedGameTimerKey_White, gameTimer.White);
       PlayerPrefs.SetFloat(SavedGameTimerKey_Black, gameTimer.Black);
+      //Debug.Log(PlayerPrefs.GetString(SavedGameKey));
     }
   }
 

@@ -49,6 +49,26 @@ public sealed class GameState {
 
   #region Methods
 
+  public static PieceType CovertUciToPromotion(string uciMove) => uciMove.Length == 5 ? Piece.TypeFrom(char.ToUpper(uciMove[4])) : PieceType.None;
+
+  public Move ConvertUciToMove(string uciMove, SideType sideType) {
+    // Extract start & destination squares from UCI string
+    int fromFile = uciMove[0] - 'a';
+    int fromRank = int.Parse(uciMove[1].ToString()) - 1;
+    int toFile = uciMove[2] - 'a';
+    int toRank = int.Parse(uciMove[3].ToString()) - 1;
+
+    //Debug.LogFormat("{4}: {0}{1} -> {2}{3}", fromFile, fromRank, toFile, toRank, uciMove);
+    //foreach (var m in gameState.MovesFor(SideType)) Debug.Log(m);
+
+    return MovesFor(sideType).FirstOrDefault(move =>
+      move.From.File == fromFile && move.From.Rank == fromRank &&
+      move.To.File == toFile && move.To.Rank == toRank
+    );
+  }
+
+  public bool AnyMovesFor(Piece piece, Square from) => moveSet.Moves.Any(move => move.Piece == piece && move.From == from);
+
   public Move[] MovesFor(SideType sideType) => moveSet.Moves.Where(move => move.Piece.SideType == sideType).ToArray();
 
   public Move[] MovesFor(Piece piece, Square from) => moveSet.Moves.Where(move => move.Piece == piece && move.From == from).ToArray();

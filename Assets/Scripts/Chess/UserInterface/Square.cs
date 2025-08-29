@@ -11,8 +11,6 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
 
   public static Color White => new(1.00f, 1.00f, 1.00f);
 
-  public static float[] AxisWeight = new float[] { 0.25f, 0.5f, 0.75f, 1f, 1f, 0.75f, 0.5f, 0.25f };
-
   #endregion
 
   #region Internal
@@ -34,6 +32,7 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
     public Image border;
     public Image alertGreen;
     public Image alertRed;
+    public Image alertBlocked;
   }
 
   #endregion
@@ -73,8 +72,6 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
   #endregion
 
   #region Properties
-
-  public float Weight => AxisWeight[Rank] * AxisWeight[File];
 
   public int Index {
     get {
@@ -177,11 +174,17 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
     set => pieceDisplay.alertRed.enabled = value;
   }
 
+  public bool BlockedAlert {
+    get => pieceDisplay.alertBlocked.enabled;
+    set => pieceDisplay.alertBlocked.enabled = value;
+  }
+
   public bool ShowAlerts {
     get => pieceDisplay.alertGreen.gameObject.activeSelf;
     set {
       pieceDisplay.alertGreen.gameObject.SetActive(value);
       pieceDisplay.alertRed.gameObject.SetActive(value);
+      pieceDisplay.alertBlocked.gameObject.SetActive(value);
     }
   }
 

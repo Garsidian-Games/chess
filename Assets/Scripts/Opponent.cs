@@ -46,7 +46,6 @@ public class Opponent : MonoBehaviour {
 
   [Header("Configuration")]
   [SerializeField] private Mode mode;
-  [SerializeField] private int searchDepth = 15;
 
   private Coroutine thinking;
 
@@ -56,8 +55,6 @@ public class Opponent : MonoBehaviour {
   private Player player;
 
   private int moveCounter;
-
-  private IStockfishEngine engine;
 
   #endregion
 
@@ -132,8 +129,7 @@ public class Opponent : MonoBehaviour {
     thinking = null;
   }
 
-  private void Make(Move move) {
-    PieceType promotion = PieceType.None;
+  private void Make(Move move, PieceType promotion = PieceType.None) {
     gameController.GameManager.Make(move, promotion);
     gameController.AudioManager.PlaySound(
       gameController.GameManager.GameState.IsMate ? sound.mate :
@@ -142,60 +138,28 @@ public class Opponent : MonoBehaviour {
     );
   }
 
-  private Move ConvertUciToMove(string uciMove, GameState gameState) {
-    // Extract start & destination squares from UCI string
-    int fromFile = uciMove[0] - 'a';
-    int fromRank = int.Parse(uciMove[1].ToString()) - 1;
-    int toFile = uciMove[2] - 'a';
-    int toRank = int.Parse(uciMove[3].ToString()) - 1;
-
-    Debug.LogFormat("{4}: {0}{1} -> {2}{3}", fromFile, fromRank, toFile, toRank, uciMove);
-    //foreach (var m in gameState.MovesFor(SideType)) Debug.Log(m);
-
-    return gameState.MovesFor(SideType).FirstOrDefault(move =>
-      move.From.File == fromFile && move.From.Rank == fromRank &&
-      move.To.File == toFile && move.To.Rank == toRank
-    );
-  }
-
-  private static IStockfishEngine CreateEngine() {
-#if UNITY_IOS && !UNITY_EDITOR
-    return new NativeStockfishEngineIOS();
-#elif UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
-    string stockfishPath = Application.dataPath + "/Editor/Stockfish/Mac/stockfish/stockfish-macos-m1-apple-silicon";
-    return new ProcessStockfishEngine(stockfishPath);
-#endif
-  }
-
   #endregion
 
   #region Coroutines
 
   private IEnumerator Think() {
     // 1. Create engine if none exists
-    if (engine == null) engine = CreateEngine();
 
     // 2. Get current FEN from your game state
     GameState gameState = gameController.GameManager.GameState;
     string fen = gameState.ToFEN(); // Assuming you have this. If not, I can help write it.
 
-    Debug.Log($"[Stockfish] Analyzing FEN: {fen}");
-
-    // 3. Start Stockfish search at configured depth
-    engine.StartSearch(fen, searchDepth);
+    gameController.StockfishMananger.StartSearch(fen);
 
     // 4. Wait until Stockfish reports "bestmove"
-    while (!engine.HasBestMove) {
-      engine.Update();
-      yield return null;
-    }
+    while (!gameController.StockfishMananger.HasBestMove) yield return null;
 
-    string bestMove = engine.BestMove;
-    Debug.Log($"[Stockfish] Best Move = {bestMove}");
+    string bestMove = gameController.StockfishMananger.BestMove;
+    //Debug.Log($"[Stockfish] Best Move = {bestMove}");
 
     // 5. Convert Stockfish UCI move into your Move type
-    Move moveToMake = ConvertUciToMove(bestMove, gameState);
-    Make(moveToMake);
+    Move moveToMake = gameState.ConvertUciToMove(bestMove, SideType);
+    Make(moveToMake, GameState.CovertUciToPromotion(bestMove));
 
     // 6. Stop thinking
     StopThinking();

@@ -63,6 +63,11 @@ public sealed class BoardState {
 
   #region Methods
 
+  public Square KingSquareFor(SideType sideType) => Find(PieceType.King, sideType).First();
+
+  public Square[] Find(PieceType pieceType, SideType sideType) =>
+    state.Where(kvp => kvp.Value.PieceType == pieceType && kvp.Value.SideType == sideType).Select(kvp => kvp.Key).ToArray();
+
   public Piece PieceAt(int rank, int file) => this[this[rank, file]];
 
   public int PiecesOnFile(int file, SideType sideType, PieceType pieceType) {

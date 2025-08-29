@@ -60,7 +60,6 @@ public static class GameStateExt {
     fen.Append(' ');
     fen.Append(gameState.FullmoveNumber);
 
-
     return fen.ToString();
   }
 
