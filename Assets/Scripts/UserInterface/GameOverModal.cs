@@ -16,12 +16,14 @@ public class GameOverModal : MonoBehaviour {
   [SerializeField] private GameObject whiteWins;
   [SerializeField] private GameObject blackWins;
   [SerializeField] private Button showScore;
+  [SerializeField] private Button newGame;
 
   #endregion
 
   #region Events
 
   [HideInInspector] public UnityEvent OnShowScore;
+  [HideInInspector] public UnityEvent OnNewGame;
 
   #endregion
 
@@ -51,6 +53,7 @@ public class GameOverModal : MonoBehaviour {
 
   private void Start() {
     showScore.onClick.AddListener(OnShowScore.Invoke);
+    newGame.onClick.AddListener(OnNewGame.Invoke);
   }
 
   #endregion

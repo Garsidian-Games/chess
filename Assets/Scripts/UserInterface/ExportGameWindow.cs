@@ -3,12 +3,14 @@ using UnityEngine.Events;
 using UnityEngine.UI;
 using TMPro;
 
-public class ExportGameWindow : MonoBehaviour {
+public class ExportGameWindow : UIWindow {
   #region Constants
 
   #endregion
 
   #region Internal
+
+  [System.Serializable] public class StringEvent : UnityEvent<string> { }
 
   #endregion
 
@@ -17,13 +19,15 @@ public class ExportGameWindow : MonoBehaviour {
   [Header("References")]
   [SerializeField] private TMP_InputField input;
   [SerializeField] private TextMeshProUGUI message;
-  [SerializeField] private Button button;
+  [SerializeField] private Button copy;
 
   private string pgn;
 
   #endregion
 
   #region Events
+
+  [HideInInspector] public StringEvent OnCopied;
 
   #endregion
 
@@ -33,13 +37,15 @@ public class ExportGameWindow : MonoBehaviour {
 
   #region Methods
 
-  public void Hide() => gameObject.SetActive(false);
+  public override void Toggle() => throw new System.InvalidOperationException();
+
+  public override void Show() => throw new System.InvalidOperationException();
 
   public void Show(string pgn) {
     message.enabled = false;
     this.pgn = pgn;
-    gameObject.SetActive(true);
     input.text = pgn;
+    ChangeVisibility(true);
   }
 
   #endregion
@@ -50,17 +56,17 @@ public class ExportGameWindow : MonoBehaviour {
 
   #region Handlers
 
-  private void HandleButtonClicked() {
+  private void HandleCopyClicked() {
+    OnCopied.Invoke(pgn);
     message.enabled = true;
-    GUIUtility.systemCopyBuffer = pgn;
   }
 
   #endregion
 
   #region Lifecycle
 
-  private void Start() {
-    button.onClick.AddListener(HandleButtonClicked);
+  protected override void Start() {
+    copy.onClick.AddListener(HandleCopyClicked);
   }
 
   #endregion

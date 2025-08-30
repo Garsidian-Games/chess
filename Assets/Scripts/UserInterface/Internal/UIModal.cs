@@ -1,8 +1,6 @@
 using UnityEngine;
-using UnityEngine.Events;
-using UnityEngine.UI;
 
-public sealed class ReadyCheckModal : UIModal {
+public abstract class UIModal : DisplayToggle {
   #region Constants
 
   #endregion
@@ -13,14 +11,9 @@ public sealed class ReadyCheckModal : UIModal {
 
   #region Fields
 
-  [Header("Actions")]
-  [SerializeField] private Button ready;
-
   #endregion
 
   #region Events
-
-  [HideInInspector] public UnityEvent OnReady;
 
   #endregion
 
@@ -41,10 +34,6 @@ public sealed class ReadyCheckModal : UIModal {
   #endregion
 
   #region Lifecycle
-
-  private void Start() {
-    ready.onClick.AddListener(OnReady.Invoke);
-  }
 
   #endregion
 }

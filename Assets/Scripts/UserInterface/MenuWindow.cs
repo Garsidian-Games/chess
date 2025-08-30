@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-public class MenuWindow : MonoBehaviour {
+public sealed class MenuWindow : UIWindow {
   #region Constants
 
   #endregion
@@ -13,6 +13,7 @@ public class MenuWindow : MonoBehaviour {
 
   #region Fields
 
+  [Header("Options")]
   [SerializeField] private Button exportGame;
   [SerializeField] private Button importGame;
   [SerializeField] private Button newGame;
@@ -43,10 +44,6 @@ public class MenuWindow : MonoBehaviour {
 
   #region Methods
 
-  public void Hide() => gameObject.SetActive(false);
-
-  public void Show() => gameObject.SetActive(true);
-
   #endregion
 
   #region Coroutines
@@ -59,7 +56,9 @@ public class MenuWindow : MonoBehaviour {
 
   #region Lifecycle
 
-  private void Start() {
+  protected override void Start() {
+    base.Start();
+
     exportGame.onClick.AddListener(OnExportGame.Invoke);
     importGame.onClick.AddListener(OnImportGame.Invoke);
     newGame.onClick.AddListener(OnNewGame.Invoke);

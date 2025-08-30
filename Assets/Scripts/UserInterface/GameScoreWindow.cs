@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 
-public class GameScoreWindow : MonoBehaviour {
+public class GameScoreWindow : UIWindow {
   #region Constants
 
   #endregion
@@ -31,8 +31,11 @@ public class GameScoreWindow : MonoBehaviour {
 
   #region Methods
 
+  public override void Toggle() => throw new System.InvalidOperationException();
+
+  public override void Show() => throw new System.InvalidOperationException();
+
   public void Show(GameState[] states) {
-    gameObject.SetActive(true);
     rows.ForEach(row => row.Hide());
 
     for (int index = 0; index < states.Length; index++) {
@@ -45,10 +48,8 @@ public class GameScoreWindow : MonoBehaviour {
       if (index % 2 == 0) row.WhiteText = annotation;
       else row.BlackText = annotation;
     }
-  }
 
-  public void Hide() {
-    gameObject.SetActive(false);
+    ChangeVisibility(true);
   }
 
   private ScoreRow Get(int index) {

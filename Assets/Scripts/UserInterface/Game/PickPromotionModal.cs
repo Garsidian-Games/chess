@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-public class PickPromotionModal : MonoBehaviour {
+public sealed class PickPromotionModal : UIModal {
   #region Constants
 
   #endregion
@@ -12,20 +12,34 @@ public class PickPromotionModal : MonoBehaviour {
   [System.Serializable] public class PieceTypeEvent : UnityEvent<PieceType> { }
 
   [System.Serializable]
+  public class ImageButton {
+    public Button button;
+    public Image white;
+    public Image black;
+
+    public void ShowFor(SideType sideType) {
+      white.enabled = sideType == SideType.White;
+      black.enabled = sideType == SideType.Black;
+    }
+  }
+
+  [System.Serializable]
   public class PieceImage {
-    public Image queen;
-    public Image knight;
-    public Image bishop;
-    public Image rook;
+    public ImageButton queen;
+    public ImageButton knight;
+    public ImageButton bishop;
+    public ImageButton rook;
   }
 
   #endregion
 
   #region Fields
 
-  [SerializeField] private PieceImage white;
-
-  [SerializeField] private PieceImage black;
+  [Header("Actions")]
+  [SerializeField] private ImageButton queen;
+  [SerializeField] private ImageButton knight;
+  [SerializeField] private ImageButton bishop;
+  [SerializeField] private ImageButton rook;
 
   #endregion
 
@@ -41,27 +55,18 @@ public class PickPromotionModal : MonoBehaviour {
 
   #region Methods
 
-  public void Show() => gameObject.SetActive(true);
+  public override void Toggle() => throw new System.InvalidOperationException();
 
-  public void Sync(SideType sideType) {
-    white.queen.enabled = sideType == SideType.White;
-    white.knight.enabled = sideType == SideType.White;
-    white.bishop.enabled = sideType == SideType.White;
-    white.rook.enabled = sideType == SideType.White;
+  public override void Show() => throw new System.InvalidOperationException();
 
-    black.queen.enabled = sideType == SideType.Black;
-    black.knight.enabled = sideType == SideType.Black;
-    black.bishop.enabled = sideType == SideType.Black;
-    black.rook.enabled = sideType == SideType.Black;
+  public void Show(SideType sideType) {
+    queen.ShowFor(sideType);
+    knight.ShowFor(sideType);
+    bishop.ShowFor(sideType);
+    rook.ShowFor(sideType);
+
+    ChangeVisibility(true);
   }
-
-  public void Queen() => Pick(PieceType.Queen);
-
-  public void Knight() => Pick(PieceType.Knight);
-
-  public void Bishop() => Pick(PieceType.Bishop);
-
-  public void Rook() => Pick(PieceType.Rook);
 
   private void Pick(PieceType pieceType) {
     gameObject.SetActive(false);
@@ -76,9 +81,24 @@ public class PickPromotionModal : MonoBehaviour {
 
   #region Handlers
 
+  private void HandleQueenClicked() => Pick(PieceType.Queen);
+
+  private void HandleKnightClicked() => Pick(PieceType.Knight);
+
+  private void HandleBishopClicked() => Pick(PieceType.Bishop);
+
+  private void HandleRookClicked() => Pick(PieceType.Rook);
+
   #endregion
 
   #region Lifecycle
+
+  private void Start() {
+    queen.button.onClick.AddListener(HandleQueenClicked);
+    knight.button.onClick.AddListener(HandleKnightClicked);
+    bishop.button.onClick.AddListener(HandleBishopClicked);
+    rook.button.onClick.AddListener(HandleRookClicked);
+  }
 
   #endregion
 }

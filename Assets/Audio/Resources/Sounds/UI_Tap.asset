@@ -16,7 +16,7 @@ AudioRandomContainer:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Button_Click
+  m_Name: UI_Tap
   m_Volume: 0
   m_Pitch: 0
   m_AutomaticTriggerTime: 0

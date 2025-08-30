@@ -3,7 +3,7 @@ using UnityEngine.Events;
 using UnityEngine.UI;
 using TMPro;
 
-public class ImportGameWindow : MonoBehaviour {
+public sealed class ImportGameWindow : UIWindow {
   #region Constants
 
   #endregion
@@ -38,7 +38,7 @@ public class ImportGameWindow : MonoBehaviour {
   [Header("References")]
   [SerializeField] private TMP_InputField input;
   [SerializeField] private TextMeshProUGUI message;
-  [SerializeField] private Button button;
+  [SerializeField] private Button import;
 
   private Board board;
   private Side white;
@@ -57,23 +57,14 @@ public class ImportGameWindow : MonoBehaviour {
 
   #region Properties
 
-  public void Configure(Board board, Side white, Side black) {
-    this.board = board;
-    this.white = white;
-    this.black = black;
-  }
-
   #endregion
 
   #region Methods
 
-  public void Hide() => gameObject.SetActive(false);
-
-  public void Show() {
-    gameObject.SetActive(true);
-    input.text = string.Empty;
-    button.interactable = false;
-    SetMessage(messageText.prompt, messageColor.warning);
+  public void Configure(Board board, Side white, Side black) {
+    this.board = board;
+    this.white = white;
+    this.black = black;
   }
 
   public void SetMessage(string text, Color color) {
@@ -81,8 +72,15 @@ public class ImportGameWindow : MonoBehaviour {
     message.color = color;
   }
 
+  protected override void OnShow() {
+    input.text = string.Empty;
+    import.interactable = false;
+    SetMessage(messageText.prompt, messageColor.warning);
+    base.OnShow();
+  }
+
   private void Setup() {
-    button.interactable = false;
+    import.interactable = false;
 
     if (string.IsNullOrWhiteSpace(input.text)) {
       SetMessage(messageText.prompt, messageColor.warning);
@@ -102,7 +100,7 @@ public class ImportGameWindow : MonoBehaviour {
     }
 
     SetMessage(messageText.success, messageColor.success);
-    button.interactable = true;
+    import.interactable = true;
   }
 
   #endregion
@@ -113,7 +111,7 @@ public class ImportGameWindow : MonoBehaviour {
 
   #region Handlers
 
-  private void HandleButtonClicked() {
+  private void HandleImportClicked() {
     OnImported.Invoke(pgn);
   }
 
@@ -132,8 +130,9 @@ public class ImportGameWindow : MonoBehaviour {
     }
   }
 
-  private void Start() {
-    button.onClick.AddListener(HandleButtonClicked);
+  protected override void Start() {
+    base.Start();
+    import.onClick.AddListener(HandleImportClicked);
     input.onValueChanged.AddListener(HandleInputValueChanged);
   }
 

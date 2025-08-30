@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-public sealed class RecoverGameModal : UIModal {
+public abstract class BaseResetGameModal : UIModal {
   #region Constants
 
   #endregion
@@ -14,15 +14,15 @@ public sealed class RecoverGameModal : UIModal {
   #region Fields
 
   [Header("Actions")]
-  [SerializeField] private Button clear;
-  [SerializeField] private Button load;
+  [SerializeField] private Button resume;
+  [SerializeField] private Button reset;
 
   #endregion
 
   #region Events
 
-  [HideInInspector] public UnityEvent OnCleared;
-  [HideInInspector] public UnityEvent OnLoaded;
+  [HideInInspector] public UnityEvent OnResume;
+  [HideInInspector] public UnityEvent OnReset;
 
   #endregion
 
@@ -44,9 +44,9 @@ public sealed class RecoverGameModal : UIModal {
 
   #region Lifecycle
 
-  private void Start() {
-    clear.onClick.AddListener(OnCleared.Invoke);
-    load.onClick.AddListener(OnLoaded.Invoke);
+  protected virtual void Start() {
+    resume.onClick.AddListener(OnResume.Invoke);
+    reset.onClick.AddListener(OnReset.Invoke);
   }
 
   #endregion
