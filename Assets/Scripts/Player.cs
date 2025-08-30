@@ -46,6 +46,8 @@ public class Player : MonoBehaviour {
     public AudioResource Invalid;
     [Tooltip("Played when player wins")]
     public AudioResource Mate;
+    [Tooltip("Played when the game ends in a draw")]
+    public AudioResource Draw;
     [Tooltip("Played when a piece is moved by a click")]
     public AudioResource Move;
     [Tooltip("Played when a pawn is being promoted")]
@@ -147,6 +149,7 @@ public class Player : MonoBehaviour {
 
     gameController.GameManager.Make(move, pieceType);
     gameController.AudioManager.PlaySound(
+      gameController.GameManager.GameState.IsDraw ? sound.Draw :
       gameController.GameManager.GameState.IsMate ? sound.Mate :
       gameController.GameManager.GameState.InCheck ? sound.Check :
       move.IsCapture ? sound.Capture : sound.Move
@@ -408,6 +411,7 @@ public class Player : MonoBehaviour {
 
     gameController.GameManager.Make(move);
     gameController.AudioManager.PlaySound(
+      gameController.GameManager.GameState.IsDraw ? sound.Draw :
       gameController.GameManager.GameState.IsMate ? sound.Mate :
       gameController.GameManager.GameState.InCheck ? sound.Check :
       move.IsCapture ? sound.Capture : moveSound
@@ -544,7 +548,7 @@ public class Player : MonoBehaviour {
   }
 
   private void HandleMoved(Move _) {
-    gameController.AudioManager.PlayMusic(gameController.GameManager.GameState.IsMate ? music.Theme : music.Game);
+    gameController.AudioManager.PlayMusic(gameController.GameManager.GameState.GameOver ? music.Theme : music.Game);
     SyncCoverage();
   }
 

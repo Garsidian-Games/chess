@@ -82,11 +82,9 @@ public sealed class PortableGameNotation {
 
       var lastCharacter = moveStr.Last();
       if (lastCharacter == '#') {
-        GameState = null;
         IsValid = true;
         EndsInCheckmate = true;
-        Debug.Log("EndsInCheckmate");
-        break;
+        moveStr = moveStr[..^1];
       }
 
       var moves = GameState.MovesFor(GameState.BoardState.SideToMove);
@@ -197,10 +195,10 @@ public sealed class PortableGameNotation {
       }
 
       GameState = GameState.MakeMove(move, promotion);
+      if (EndsInCheckmate) break;
     }
 
     if (GameState.IsMate) {
-      GameState = null;
       IsValid = true;
       EndsInCheckmate = true;
     } else if (isInvalid) GameState = null;

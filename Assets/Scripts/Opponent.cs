@@ -33,6 +33,7 @@ public class Opponent : MonoBehaviour {
   public class Sound {
     public AudioResource capture;
     public AudioResource check;
+    public AudioResource draw;
     public AudioResource mate;
     public AudioResource move;
   }
@@ -132,6 +133,7 @@ public class Opponent : MonoBehaviour {
   private void Make(Move move, PieceType promotion = PieceType.None) {
     gameController.GameManager.Make(move, promotion);
     gameController.AudioManager.PlaySound(
+      gameController.GameManager.GameState.IsDraw ? sound.draw :
       gameController.GameManager.GameState.IsMate ? sound.mate :
       gameController.GameManager.GameState.InCheck ? sound.check :
       move.IsCapture ? sound.capture : sound.move

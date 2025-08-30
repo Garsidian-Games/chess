@@ -34,6 +34,8 @@ public sealed class MoveSet {
 
   public readonly bool IsMate;
 
+  public readonly bool IsStalemate;
+
   public Move[] Moves => moves.ToArray();
 
   #endregion

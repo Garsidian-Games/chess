@@ -187,7 +187,7 @@ public class GameManager : MonoBehaviour {
   }
 
   private void Save() {
-    if (GameState.IsMate) ClearSave();
+    if (GameState.GameOver) ClearSave();
     else {
       //Debug.Log("Save");
       PlayerPrefs.SetString(SavedGameKey, ToString());

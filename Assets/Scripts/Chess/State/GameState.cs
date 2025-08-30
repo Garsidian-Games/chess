@@ -41,7 +41,11 @@ public sealed class GameState {
 
   public bool InCheck => BoardState.InCheck;
 
+  public bool GameOver => IsMate || IsDraw;
+
   public bool IsMate => moveSet.IsMate;
+
+  public bool IsDraw => moveSet.IsStalemate;
 
   public Move[] Moves => moveSet.Moves;
 

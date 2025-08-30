@@ -15,14 +15,15 @@ public sealed class ImportGameWindow : UIWindow {
   [System.Serializable]
   public class MessageText {
     public string prompt = "Please enter the PGN you wish to import.";
-    public string errorInvalid = "Entered PGN is invalid!";
-    public string errorCheckmate = "Entered PGN ends in checkmate!";
+    public string errorInvalid = "Error: Entered PGN is invalid!";
+    public string warningCheckmate = "Warning: Entered PGN ends in checkmate!";
     public string success = "PGN is valid.";
   }
 
   [System.Serializable]
   public class MessageColor {
     public Color success;
+    public Color standard;
     public Color warning;
     public Color error;
   }
@@ -39,6 +40,7 @@ public sealed class ImportGameWindow : UIWindow {
   [SerializeField] private TMP_InputField input;
   [SerializeField] private TextMeshProUGUI message;
   [SerializeField] private Button import;
+  [SerializeField] private Button importAnyway;
 
   private Board board;
   private Side white;
@@ -75,15 +77,18 @@ public sealed class ImportGameWindow : UIWindow {
   protected override void OnShow() {
     input.text = string.Empty;
     import.interactable = false;
-    SetMessage(messageText.prompt, messageColor.warning);
+    SetMessage(messageText.prompt, messageColor.standard);
     base.OnShow();
   }
 
   private void Setup() {
+    import.gameObject.SetActive(true);
+    importAnyway.gameObject.SetActive(false);
+
     import.interactable = false;
 
     if (string.IsNullOrWhiteSpace(input.text)) {
-      SetMessage(messageText.prompt, messageColor.warning);
+      SetMessage(messageText.prompt, messageColor.standard);
       return;
     }
 
@@ -95,7 +100,9 @@ public sealed class ImportGameWindow : UIWindow {
     }
 
     if (pgn.EndsInCheckmate) {
-      SetMessage(messageText.errorCheckmate, messageColor.error);
+      import.gameObject.SetActive(false);
+      importAnyway.gameObject.SetActive(true);
+      SetMessage(messageText.warningCheckmate, messageColor.warning);
       return;
     }
 
@@ -133,6 +140,7 @@ public sealed class ImportGameWindow : UIWindow {
   protected override void Start() {
     base.Start();
     import.onClick.AddListener(HandleImportClicked);
+    importAnyway.onClick.AddListener(HandleImportClicked);
     input.onValueChanged.AddListener(HandleInputValueChanged);
   }
 

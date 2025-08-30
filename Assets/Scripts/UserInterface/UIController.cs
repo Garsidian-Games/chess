@@ -117,6 +117,7 @@ public class UIController : MonoBehaviour {
   private void Sync() {
     bool isRoot = gameController.GameManager.GameState.BoardState.IsRoot;
     bool isMate = gameController.GameManager.GameState.IsMate;
+    bool isDraw = gameController.GameManager.GameState.IsDraw;
     bool canUndo = gameController.GameManager.CanUndo;
 
     window.menu.CanResetGame = !isRoot;
@@ -138,7 +139,7 @@ public class UIController : MonoBehaviour {
       permanent.sideStatusBlack.BorderColor = player.IsWhite ? borderColor.Opponent : borderColor.Player;
     }
 
-    if (isMate) modal.gameOver.Show(gameController.GameManager.GameState.BoardState.SideToMove);
+    if (isMate) modal.gameOver.Show(isDraw, gameController.GameManager.GameState.BoardState.SideToMove);
     else {
       permanent.sideStatusWhite.InCheck = gameController.GameManager.GameState.BoardState.WhiteInCheck;
       permanent.sideStatusBlack.InCheck = gameController.GameManager.GameState.BoardState.BlackInCheck;
@@ -189,6 +190,7 @@ public class UIController : MonoBehaviour {
   }
 
   private void HandleUndo() {
+    modal.gameOver.Hide();
     PlaySound(sound.tap);
     gameController.GameManager.Undo();
   }
@@ -257,7 +259,7 @@ public class UIController : MonoBehaviour {
     window.importGame.Hide();
     window.menu.Hide();
     Sync();
-    permanent.readyCheckModal.Display(!player.IsTurnToMove);
+    if (!pgn.EndsInCheckmate) permanent.readyCheckModal.Display(!player.IsTurnToMove);
   }
 
   private void HandleClearSave() {
@@ -363,12 +365,14 @@ public class UIController : MonoBehaviour {
   private void Bind(GameOverModal gameOverModal) {
     // Don't bind the normal modal sound handlers - the player already handles sounds for this modal
     // Bind(gameOverModal as UIModal);
+    gameOverModal.OnUndo.AddListener(HandleUndo);
     gameOverModal.OnShowScore.AddListener(HandleShowScore);
     gameOverModal.OnNewGame.AddListener(HandleResetGame);
   }
 
   private void Bind(RecoverGameModal recoverGameModal) {
-    Bind(recoverGameModal as UIModal);
+    // bind only the hide handler - otherwise an annoying window popup plays at app load
+    recoverGameModal.OnHidden.AddListener(HandleDisplayToggleHidden);
     recoverGameModal.OnCleared.AddListener(HandleClearSave);
     recoverGameModal.OnLoaded.AddListener(HandleLoadSave);
   }

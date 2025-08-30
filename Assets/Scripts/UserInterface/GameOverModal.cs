@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-public class GameOverModal : MonoBehaviour {
+public class GameOverModal : UIModal {
   #region Constants
 
   #endregion
@@ -15,6 +15,8 @@ public class GameOverModal : MonoBehaviour {
 
   [SerializeField] private GameObject whiteWins;
   [SerializeField] private GameObject blackWins;
+  [SerializeField] private GameObject draw;
+  [SerializeField] private Button undo;
   [SerializeField] private Button showScore;
   [SerializeField] private Button newGame;
 
@@ -22,6 +24,7 @@ public class GameOverModal : MonoBehaviour {
 
   #region Events
 
+  [HideInInspector] public UnityEvent OnUndo;
   [HideInInspector] public UnityEvent OnShowScore;
   [HideInInspector] public UnityEvent OnNewGame;
 
@@ -33,10 +36,11 @@ public class GameOverModal : MonoBehaviour {
 
   #region Methods
 
-  public void Show(SideType loser) {
-    gameObject.SetActive(true);
-    whiteWins.SetActive(loser == SideType.Black);
-    blackWins.SetActive(loser == SideType.White);
+  public void Show(bool isDraw, SideType? loser) {
+    draw.SetActive(isDraw);
+    whiteWins.SetActive(!isDraw && loser == SideType.Black);
+    blackWins.SetActive(!isDraw && loser == SideType.White);
+    ChangeVisibility(true);
   }
 
   #endregion
@@ -52,6 +56,7 @@ public class GameOverModal : MonoBehaviour {
   #region Lifecycle
 
   private void Start() {
+    undo.onClick.AddListener(OnUndo.Invoke);
     showScore.onClick.AddListener(OnShowScore.Invoke);
     newGame.onClick.AddListener(OnNewGame.Invoke);
   }
