@@ -15,6 +15,7 @@ public sealed class SettingsWindow : UIWindow {
   [Header("Settings References")]
   [SerializeField] private SideSwitcher side;
   [SerializeField] private DifficultyControl difficulty;
+  [SerializeField] private TimeToggle moveTimer;
   [SerializeField] private VolumeControl sound;
   [SerializeField] private VolumeControl music;
   [SerializeField] private ChangeSideModal changeSideModal;
@@ -26,6 +27,7 @@ public sealed class SettingsWindow : UIWindow {
   #region Events
 
   [HideInInspector] public UnityEvent OnInnerModalClosed;
+  [HideInInspector] public TimeToggle.BoolEvent OnTimeToggled;
   [HideInInspector] public SideSwitcher.SideTypeEvent OnSideSwitched;
   [HideInInspector] public DifficultyControl.DepthStepEvent OnDepthStepChanged;
   [HideInInspector] public UnityEvent OnReset;
@@ -40,8 +42,9 @@ public sealed class SettingsWindow : UIWindow {
 
   #region Methods
 
-  public void Sync(SideType sideType, int depthStep) {
+  public void Sync(SideType sideType, bool useMoveTimer, int depthStep) {
     side.Sync(sideType);
+    moveTimer.Sync(useMoveTimer);
     difficulty.Sync(depthStep);
   }
 
@@ -81,6 +84,7 @@ public sealed class SettingsWindow : UIWindow {
     base.Start();
     side.OnSwitchClicked.AddListener(HandleSideSwitch);
     difficulty.OnDepthStepChanged.AddListener(OnDepthStepChanged.Invoke);
+    moveTimer.OnTimeToggled.AddListener(OnTimeToggled.Invoke);
     changeSideModal.OnResume.AddListener(HandleResume);
     changeSideModal.OnReset.AddListener(HandleSideSwitchReset);
   }

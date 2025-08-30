@@ -19,9 +19,16 @@ public class SideStatus : MonoBehaviour {
   [SerializeField] private Image border;
   [SerializeField] private TextMeshProUGUI title;
   [SerializeField] private TextMeshProUGUI timer;
+  [SerializeField] private TextMeshProUGUI yourTurn;
+  [SerializeField] private TextMeshProUGUI pleaseWait;
+  [SerializeField] private TextMeshProUGUI thinking;
   [SerializeField] private TextMeshProUGUI check;
 
   private Color defaultBorderColor;
+
+  private bool useMoveTimer;
+  private bool forPlayer;
+  private bool turnToMove;
 
   #endregion
 
@@ -50,6 +57,30 @@ public class SideStatus : MonoBehaviour {
     set => timer.text = FormatTimer(value);
   }
 
+  public bool UseMoveTimer {
+    get => useMoveTimer;
+    set {
+      useMoveTimer = value;
+      Sync();
+    }
+  }
+
+  public bool ForPlayer {
+    get => forPlayer;
+    set {
+      forPlayer = value;
+      Sync();
+    }
+  }
+
+  public bool TurnToMove {
+    get => turnToMove;
+    set {
+      turnToMove = value;
+      Sync();
+    }
+  }
+
   #endregion
 
   #region Methods
@@ -65,6 +96,13 @@ public class SideStatus : MonoBehaviour {
   }
 
   public void Display(Piece[] captured) => capturedPieces.Display(captured.Where(piece => piece.SideType != sideType).ToArray());
+
+  private void Sync() {
+    timer.gameObject.SetActive(UseMoveTimer);
+    yourTurn.gameObject.SetActive(!UseMoveTimer && ForPlayer && TurnToMove);
+    pleaseWait.gameObject.SetActive(!UseMoveTimer && ForPlayer && !TurnToMove);
+    thinking.gameObject.SetActive(!UseMoveTimer && !ForPlayer && TurnToMove);
+  }
 
   #endregion
 

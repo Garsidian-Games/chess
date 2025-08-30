@@ -74,6 +74,9 @@ public class UIController : MonoBehaviour {
   [SerializeField] private Window window;
   [SerializeField] private Screen screen;
 
+  [Header("Configuration")]
+  [SerializeField] private string prefMoveTimer = "UseMoveTimer";
+
   private GameController gameController;
 
   private Player player;
@@ -85,6 +88,8 @@ public class UIController : MonoBehaviour {
   private readonly Dictionary<GameState, Move> hints = new();
 
   private bool gettingHint;
+
+  private bool useMoveTimer;
 
   #endregion
 
@@ -146,10 +151,22 @@ public class UIController : MonoBehaviour {
     }
 
     permanent.sideStatusWhite.Title = player.SideType == SideType.White ? "Player" : "Opponent";
-    permanent.sideStatusBlack.Title = player.SideType == SideType.White ? "Opponent" : "Player";
+    permanent.sideStatusWhite.ForPlayer = player.IsWhite;
+    permanent.sideStatusWhite.TurnToMove = gameController.GameManager.GameState.BoardState.SideToMove == SideType.White;
 
-    window.settings.Sync(player.SideType, opponent.DepthStep);
+    permanent.sideStatusBlack.Title = player.SideType == SideType.White ? "Opponent" : "Player";
+    permanent.sideStatusBlack.ForPlayer = player.IsBlack;
+    permanent.sideStatusBlack.TurnToMove = gameController.GameManager.GameState.BoardState.SideToMove == SideType.Black;
+
+    window.settings.Sync(player.SideType, useMoveTimer, opponent.DepthStep);
     window.settings.GameInProgress = !isRoot;
+
+    SyncMoveTimer();
+  }
+
+  private void SyncMoveTimer() {
+    permanent.sideStatusWhite.UseMoveTimer = useMoveTimer;
+    permanent.sideStatusBlack.UseMoveTimer = useMoveTimer;
   }
 
   private void PlaySound(AudioResource resource) => gameController.AudioManager.PlaySound(resource);
@@ -287,6 +304,13 @@ public class UIController : MonoBehaviour {
 
   private void HandleDisplayToggleHidden() => PlaySound(sound.hide);
 
+  private void HandleTimeToggled(bool value) {
+    if (value) PlayerPrefs.DeleteKey(prefMoveTimer);
+    else PlayerPrefs.SetInt(prefMoveTimer, 1);
+    useMoveTimer = PlayerPrefs.HasKey(prefMoveTimer);
+    SyncMoveTimer();
+  }
+
   #endregion
 
   #region Binders
@@ -403,6 +427,7 @@ public class UIController : MonoBehaviour {
     Bind(settingsWindow as UIWindow);
     settingsWindow.OnSideSwitched.AddListener(HandleSideSwitched);
     settingsWindow.OnDepthStepChanged.AddListener(HandleDepthStepChanged);
+    settingsWindow.OnTimeToggled.AddListener(HandleTimeToggled);
     settingsWindow.OnReset.AddListener(HandleResetGame);
     settingsWindow.OnInnerModalClosed.AddListener(HandleDisplayToggleHidden);
   }
@@ -454,6 +479,9 @@ public class UIController : MonoBehaviour {
 
   private void Start() {
     screen.loading.Show();
+
+    useMoveTimer = PlayerPrefs.HasKey(prefMoveTimer);
+    SyncMoveTimer();
 
     Bind(board);
     Bind(gameController);

@@ -189,6 +189,8 @@ public class Player : MonoBehaviour {
           if (gameController.GameManager.GameState.AnyMovesFor(piece, square)) isBlocked = false;
           else isBlocked = !gameController.GameManager.GameState.BoardState.CoverageMap.From(square).Any(c => c.Other == null);
         }
+      } else if (piece.SideType == gameController.GameManager.GameState.BoardState.SideToMove) {
+        isBlocked = !gameController.GameManager.GameState.AnyMovesFor(piece, square);
       } else {
         isBlocked = !gameController.GameManager.GameState.BoardState.CoverageMap.From(square).Any(c => c.Other == null || c.Other.SideType != c.Piece.SideType);
       }
