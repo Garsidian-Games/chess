@@ -153,9 +153,8 @@ public sealed class MoveSet {
     if (!boardState.CoverageMap.InCheck(sideToMove.SideType)) {
       TryAddKingSideCastle(sideToMove.HomeRank);
       TryAddQueenSideCastle(sideToMove.HomeRank);
-    }
-
-    IsMate = moves.Count == 0;
+      IsStalemate = moves.Count == 0;
+    } else IsMate = moves.Count == 0;
   }
 
   #endregion

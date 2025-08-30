@@ -7,6 +7,8 @@ using System.Linq;
 public class Player : MonoBehaviour {
   #region Constants
 
+  public const int HintSearchDepth = 18;
+
   public static float[] CoverageOpacity = new float[] { 0f, 0.2f, 0.4f, 0.6f };
 
   #endregion

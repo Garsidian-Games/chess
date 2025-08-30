@@ -12,8 +12,6 @@ public class StockfishMananger : MonoBehaviour {
 
   #region Fields
 
-  [SerializeField] private int searchDepth = 15;
-
   private IStockfishEngine engine;
 
   private string bestMove;
@@ -47,11 +45,11 @@ public class StockfishMananger : MonoBehaviour {
 
   #region Methods
 
-  public void StartSearch(string fen) {
+  public void StartSearch(string fen, int depth) {
     if (IsBusy) throw new System.InvalidOperationException("Search is already running!");
     IsBusy = true;
     //Debug.Log($"[StockfishManager] Analyzing FEN: {fen}");
-    engine.StartSearch(fen, searchDepth);
+    engine.StartSearch(fen, depth);
   }
 
   private static IStockfishEngine CreateEngine() {

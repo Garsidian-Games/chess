@@ -8,6 +8,12 @@ using System.Linq;
 public class Opponent : MonoBehaviour {
   #region Constants
 
+  public const int DepthPerStep = 8;
+
+  public const int DepthStepMin = 1;
+
+  public const int DepthStepCount = 3;
+
   private readonly string[] enPassant = new string[] { "a5", "h5", "b5", "g5", "c5", "f5", "d5", "e5" };
 
   private readonly string[] foolWhite = new string[] { "f3", "g4" };
@@ -47,6 +53,8 @@ public class Opponent : MonoBehaviour {
 
   [Header("Configuration")]
   [SerializeField] private Mode mode;
+  [SerializeField] private string prefDifficulty = "Difficulty";
+  [SerializeField] [Range(DepthStepMin, DepthStepCount)] private int defaultDepthStep = 2;
 
   private Coroutine thinking;
 
@@ -56,6 +64,7 @@ public class Opponent : MonoBehaviour {
   private Player player;
 
   private int moveCounter;
+  private int depthStep;
 
   #endregion
 
@@ -80,6 +89,15 @@ public class Opponent : MonoBehaviour {
       if (!value) return;
       isUnlocked = value;
       OnUnlocked.Invoke();
+    }
+  }
+
+  public int DepthStep {
+    get => depthStep;
+    set {
+      if (depthStep == value) return;
+      depthStep = value;
+      PlayerPrefs.SetInt(prefDifficulty, depthStep);
     }
   }
 
@@ -151,7 +169,7 @@ public class Opponent : MonoBehaviour {
     GameState gameState = gameController.GameManager.GameState;
     string fen = gameState.ToFEN(); // Assuming you have this. If not, I can help write it.
 
-    gameController.StockfishMananger.StartSearch(fen);
+    gameController.StockfishMananger.StartSearch(fen, DepthStep * DepthPerStep);
 
     // 4. Wait until Stockfish reports "bestmove"
     while (!gameController.StockfishMananger.HasBestMove) yield return null;
@@ -189,6 +207,8 @@ public class Opponent : MonoBehaviour {
   }
 
   private void Start() {
+    if (!PlayerPrefs.HasKey(prefDifficulty)) PlayerPrefs.SetInt(prefDifficulty, defaultDepthStep);
+    depthStep = PlayerPrefs.GetInt(prefDifficulty);
     gameController.GameManager.OnMoved.AddListener(HandleMoved);
   }
 

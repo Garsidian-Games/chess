@@ -148,7 +148,7 @@ public class UIController : MonoBehaviour {
     permanent.sideStatusWhite.Title = player.SideType == SideType.White ? "Player" : "Opponent";
     permanent.sideStatusBlack.Title = player.SideType == SideType.White ? "Opponent" : "Player";
 
-    window.settings.Sync(player.SideType);
+    window.settings.Sync(player.SideType, opponent.DepthStep);
     window.settings.GameInProgress = !isRoot;
   }
 
@@ -204,7 +204,7 @@ public class UIController : MonoBehaviour {
     else {
       gettingHint = true;
       permanent.playersTurn.HintBusy = true;
-      gameController.StockfishMananger.StartSearch(gameController.GameManager.GameState.ToFEN());
+      gameController.StockfishMananger.StartSearch(gameController.GameManager.GameState.ToFEN(), Player.HintSearchDepth);
     }
   }
 
@@ -214,6 +214,10 @@ public class UIController : MonoBehaviour {
       SideType.Black => SideType.White,
       _ => throw new System.ArgumentException(string.Format("{0} is not a valid SideType", sideType)),
     };
+  }
+
+  private void HandleDepthStepChanged(int depthStep) {
+    opponent.DepthStep = depthStep;
   }
 
   private void HandleResetGame() {
@@ -398,6 +402,7 @@ public class UIController : MonoBehaviour {
   private void Bind(SettingsWindow settingsWindow) {
     Bind(settingsWindow as UIWindow);
     settingsWindow.OnSideSwitched.AddListener(HandleSideSwitched);
+    settingsWindow.OnDepthStepChanged.AddListener(HandleDepthStepChanged);
     settingsWindow.OnReset.AddListener(HandleResetGame);
     settingsWindow.OnInnerModalClosed.AddListener(HandleDisplayToggleHidden);
   }
