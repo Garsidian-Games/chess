@@ -146,7 +146,9 @@ public sealed class GameState {
     BoardState = gameState.BoardState.After(move, promotion);
     moveSet = new(BoardState);
 
-    if (BoardState.SideToMove == SideType.White) FullmoveNumber = gameState.FullmoveNumber + 1;
+    FullmoveNumber = gameState.FullmoveNumber;
+    if (BoardState.SideToMove == SideType.White) FullmoveNumber++;
+
     HalfmoveClock = move.IsCapture || move.Piece.IsPawn ? 0 : HalfmoveClock + 1;
   }
 

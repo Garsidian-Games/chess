@@ -118,6 +118,37 @@ public class GameManager : MonoBehaviour {
 
   #region Methods
 
+  public void RevertTo(int fullmoveNumber, SideType sideType) {
+    if (GameState.IsRoot) return;
+
+    GameState gameState = GameState.Previous;
+    List<GameState> visisted = new();
+    while (true) {
+      visisted.Add(gameState);
+
+      if (gameState.FullmoveNumber == fullmoveNumber && gameState.BoardState.SideToMove == sideType) {
+        if (GameState == gameState) return;
+        foreach (var gs in visisted) timers.Remove(gs);
+
+        GameState = gameState;
+        uiController.Board.Render(GameState);
+
+        if (!timers.ContainsKey(GameState)) timers[GameState] = new(0f, 0f);
+        gameTimer = timers[GameState];
+        turnTimer = 0f;
+
+        OnUndone.Invoke();
+        Save();
+        return;
+      }
+
+      if (gameState.IsRoot) break;
+      else gameState = gameState.Previous;
+    }
+
+    throw new System.ArgumentException(string.Format("Couldn't resolve fullmoveNumber={0} sideType={1}", fullmoveNumber, sideType));
+  }
+
   public void ClearSave() {
     //Debug.Log("ClearSave");
     PlayerPrefs.DeleteKey(SavedGameKey);
@@ -146,10 +177,11 @@ public class GameManager : MonoBehaviour {
 
   public void Import(PortableGameNotation pgn, float white = 0, float black = 0) {
     var gameState = pgn.GameState;
-    while (!gameState.IsRoot) {
+    while (true) {
       GameTimer timer = new(white, black);
       timers[gameState] = timer;
-      gameState = gameState.Previous;
+      if (gameState.IsRoot) break;
+      else gameState = gameState.Previous;
     }
 
     gameTimer = timers[pgn.GameState];
@@ -165,7 +197,8 @@ public class GameManager : MonoBehaviour {
     GameState = GameState.Previous.Previous;
     uiController.Board.Render(GameState);
 
-    gameTimer = timers.ContainsKey(GameState) ? timers[GameState] : new(0f, 0f);
+    if (!timers.ContainsKey(GameState)) timers[GameState] = new(0f, 0f);
+    gameTimer = timers[GameState];
     turnTimer = 0f;
 
     OnUndone.Invoke();
@@ -173,7 +206,7 @@ public class GameManager : MonoBehaviour {
   }
 
   public void Make(Move move, PieceType promotion = PieceType.None) {
-    var timer = new GameTimer(timers[GameState], turnTimer, GameState.BoardState.SideToMove);
+    var timer = new GameTimer(gameTimer, turnTimer, GameState.BoardState.SideToMove);
 
     GameState = GameState.MakeMove(move, promotion);
     uiController.Board.Render(GameState);

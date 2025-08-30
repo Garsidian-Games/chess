@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.UI;
 using TMPro;
 
 public class ScoreRow : MonoBehaviour {
@@ -8,17 +10,29 @@ public class ScoreRow : MonoBehaviour {
 
   #region Internal
 
+  [System.Serializable] public class ScoreEvent : UnityEvent<int, SideType> { }
+
+  [System.Serializable]
+  public class SideButton {
+    public Button button;
+    public TextMeshProUGUI text;
+  }
+
   #endregion
 
   #region Fields
 
   [SerializeField] private TextMeshProUGUI number;
-  [SerializeField] private TextMeshProUGUI white;
-  [SerializeField] private TextMeshProUGUI black;
+  [SerializeField] private SideButton white;
+  [SerializeField] private SideButton black;
+
+  private int index;
 
   #endregion
 
   #region Events
+
+  [HideInInspector] public ScoreEvent OnScoreClicked;
 
   #endregion
 
@@ -30,13 +44,13 @@ public class ScoreRow : MonoBehaviour {
   }
 
   public string WhiteText {
-    get => white.text;
-    set => white.text = value;
+    get => white.text.text;
+    set => white.text.text = value;
   }
 
   public string BlackText {
-    get => black.text;
-    set => black.text = value;
+    get => black.text.text;
+    set => black.text.text = value;
   }
 
   #endregion
@@ -65,12 +79,23 @@ public class ScoreRow : MonoBehaviour {
 
   #region Handlers
 
+  private void HandleWhiteClicked() {
+    OnScoreClicked.Invoke(index, SideType.White);
+  }
+
+  private void HandleBlackClicked() {
+    OnScoreClicked.Invoke(index, SideType.Black);
+  }
+
   #endregion
 
   #region Lifecycle
 
   private void Start() {
-    NumberText = $"{transform.GetSiblingIndex() + 1}.";
+    index = transform.GetSiblingIndex() + 1;
+    white.button.onClick.AddListener(HandleWhiteClicked);
+    black.button.onClick.AddListener(HandleBlackClicked);
+    NumberText = $"{index}.";
   }
 
   #endregion

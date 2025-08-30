@@ -171,6 +171,11 @@ public class UIController : MonoBehaviour {
 
   private void PlaySound(AudioResource resource) => gameController.AudioManager.PlaySound(resource);
 
+  private void EnableOpponent() {
+    opponent.IsUnlocked = true;
+    permanent.opponentsTurn.IsThinking = true;
+  }
+
   #endregion
 
   #region Coroutines
@@ -188,7 +193,7 @@ public class UIController : MonoBehaviour {
   }
 
   private void HandleMoved(Move move) {
-    permanent.opponentsTurn.IsThinking = true;
+    EnableOpponent();
     Sync();
   }
 
@@ -248,12 +253,20 @@ public class UIController : MonoBehaviour {
   }
 
   private void HandlePlayerIsReady() {
+    permanent.readyCheckModal.Hide();
     permanent.opponentsTurn.IsThinking = true;
     opponent.IsUnlocked = true;
     player.PlayGameMusic();
   }
 
   private void HandleUndone() {
+    window.gameScore.Hide();
+    modal.gameOver.Hide();
+    EnableOpponent();
+    Sync();
+  }
+
+  private void HandleImported() {
     Sync();
   }
 
@@ -311,6 +324,8 @@ public class UIController : MonoBehaviour {
     SyncMoveTimer();
   }
 
+  private void HandleScoreClicked(int index, SideType sideType) => gameController.GameManager.RevertTo(index, sideType);
+
   #endregion
 
   #region Binders
@@ -323,6 +338,7 @@ public class UIController : MonoBehaviour {
 
     gameController.GameManager.OnMoved.AddListener(HandleMoved);
     gameController.GameManager.OnUndone.AddListener(HandleUndone);
+    gameController.GameManager.OnImported.AddListener(HandleImported);
   }
 
   private void Bind(Board board) {
@@ -441,6 +457,11 @@ public class UIController : MonoBehaviour {
   private void Bind(ExportGameWindow exportGameWindow) {
     Bind(exportGameWindow as UIWindow);
     exportGameWindow.OnCopied.AddListener(HandleGameExportCopied);
+  }
+
+  private void Bind(GameScoreWindow gameScoreWindow) {
+    Bind(gameScoreWindow as UIWindow);
+    gameScoreWindow.OnScoreClicked.AddListener(HandleScoreClicked);
   }
 
   #endregion

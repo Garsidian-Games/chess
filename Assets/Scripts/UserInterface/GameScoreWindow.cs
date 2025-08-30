@@ -23,6 +23,8 @@ public class GameScoreWindow : UIWindow {
 
   #region Events
 
+  [HideInInspector] public ScoreRow.ScoreEvent OnScoreClicked;
+
   #endregion
 
   #region Properties
@@ -53,7 +55,11 @@ public class GameScoreWindow : UIWindow {
   }
 
   private ScoreRow Get(int index) {
-    while (index >= rows.Count) rows.Add(Instantiate(prefab, container).GetComponent<ScoreRow>());
+    while (index >= rows.Count) {
+      var scoreRow = Instantiate(prefab, container).GetComponent<ScoreRow>();
+      scoreRow.OnScoreClicked.AddListener(OnScoreClicked.Invoke);
+      rows.Add(scoreRow);
+    }
     var row = rows[index];
     row.Show();
     return row;

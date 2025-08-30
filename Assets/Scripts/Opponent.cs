@@ -189,10 +189,6 @@ public class Opponent : MonoBehaviour {
 
   #region Handlers
 
-  private void HandleMoved(Move _) {
-    IsUnlocked = true;
-  }
-
   #endregion
 
   #region Lifecycle
@@ -209,7 +205,6 @@ public class Opponent : MonoBehaviour {
   private void Start() {
     if (!PlayerPrefs.HasKey(prefDifficulty)) PlayerPrefs.SetInt(prefDifficulty, defaultDepthStep);
     depthStep = PlayerPrefs.GetInt(prefDifficulty);
-    gameController.GameManager.OnMoved.AddListener(HandleMoved);
   }
 
   private void Awake() {
