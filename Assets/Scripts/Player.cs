@@ -94,7 +94,7 @@ public class Player : MonoBehaviour {
 
   private Move hint;
 
-  private readonly Dictionary<GameState, Dictionary<Square, SquareState>> squareStates = new();
+  private SquareStateProvider squareStateProvider;
 
   #endregion
 
@@ -110,10 +110,6 @@ public class Player : MonoBehaviour {
   #region Properties
 
   public static Player Instance => GameObject.FindWithTag("Player").GetComponent<Player>();
-
-  public SquareState[] SquareStates => CurrentSquareStates.Values.ToArray();
-
-  public SquareState this[Square square] => CurrentSquareStates[square];
 
   public bool IsWhite => SideType == SideType.White;
 
@@ -140,22 +136,6 @@ public class Player : MonoBehaviour {
   public Piece Dragged { get; private set; }
 
   public Color BorderColorInspected => borderColor.Inspected;
-
-  private Dictionary<Square, SquareState> CurrentSquareStates {
-    get {
-      var gameState = gameController.GameManager.GameState;
-
-      if (!squareStates.ContainsKey(gameState)) {
-        squareStates[gameState] = new();
-        var sideToMove = gameState.BoardState.SideToMove;
-        var captureMoves = gameState.MovesFor(gameState.BoardState.SideToMove).Where(m => m.IsCapture);
-        var dangers = gameState.BoardState.CoverageMap.Coverages.Where(c => c.Piece.SideType != sideToMove && c.Other != null && c.Other.SideType == sideToMove);
-        foreach (var square in gameState.BoardState.Squares) squareStates[gameState][square] = new(square, this, gameState, captureMoves, dangers);
-      }
-
-      return squareStates[gameState];
-    }
-  }
 
   #endregion
 
@@ -199,22 +179,7 @@ public class Player : MonoBehaviour {
     ClearHintEffects();
     hint = null;
 
-    foreach (var squareState in SquareStates) squareState.Apply();
-
-    ApplyEffects();
-  }
-
-  private void ClearEffects() {
-    ClearCheckEffects();
-    ClearHintEffects();
-  }
-
-  private void ApplyEffects() {
-    if (gameController.GameManager.GameState.BoardState.WhiteInCheck)
-      ApplyCheckEffects(gameController.GameManager.GameState.BoardState.KingSquareFor(SideType.White), IsWhite);
-
-    if (gameController.GameManager.GameState.BoardState.BlackInCheck)
-      ApplyCheckEffects(gameController.GameManager.GameState.BoardState.KingSquareFor(SideType.Black), IsBlack);
+    foreach (var squareState in squareStateProvider.SquareStates) squareState.Apply();
 
     ApplyHintEffects();
   }
@@ -233,22 +198,6 @@ public class Player : MonoBehaviour {
     hint.From.PulsePiece = true;
     hint.To.BorderColor = borderColor.Inspected;
     hint.To.HighlightVisible = true;
-  }
-
-  private void ClearCheckEffects() {
-    foreach (var square in gameController.GameManager.GameState.BoardState.Squares) {
-      square.PulsePiece = false;
-      square.WobblePiece = false;
-      square.BorderVisible = false;
-      square.ResetPieceBorderColor();
-    }
-  }
-
-  private void ApplyCheckEffects(Square square, bool isPlayer) {
-    square.PulsePiece = true;
-    square.WobblePiece = true;
-    square.PieceBorderColor = isPlayer ? borderColor.Opponent : borderColor.Player;
-    square.BorderColor = isPlayer ? borderColor.Opponent : borderColor.Player;
   }
 
   private void ClearDragged() {
@@ -300,7 +249,7 @@ public class Player : MonoBehaviour {
       var hasCoverage = coverages.Count() > 0;
 
       if (!hasCoverage) {
-        ApplyEffects();
+        ApplyHintEffects();
         gameController.AudioManager.PlaySound(sound.Stuck);
         return;
       }
@@ -312,7 +261,7 @@ public class Player : MonoBehaviour {
       Clicked.PieceBorderColor = _borderColor;
       Clicked.PulsePiece = true;
       HideAlerts();
-      ClearEffects();
+      ClearHintEffects();
       foreach (var coverage in coverages) coverage.To.HighlightVisible = true;
       return;
     }
@@ -325,7 +274,7 @@ public class Player : MonoBehaviour {
     Clicked.PieceBorderColor = _borderColor;
     Clicked.WobblePiece = true;
     HideAlerts();
-    ClearEffects();
+    ClearHintEffects();
     foreach (var move in moves) {
       bool isHint = hint == move;
       move.To.TargetColor = targetColor;
@@ -341,7 +290,7 @@ public class Player : MonoBehaviour {
     //Debug.Log(hasCoverage ? sound.Focus : sound.Empty);
     gameController.AudioManager.PlaySound(hasCoverage ? sound.Focus : sound.Empty);
     if (!hasCoverage) {
-      ApplyEffects();
+      ApplyHintEffects();
       return;
     }
     clickedAt = Time.time;
@@ -349,7 +298,7 @@ public class Player : MonoBehaviour {
     Clicked = square;
     Clicked.BorderColor = borderColor.Inspected;
     HideAlerts();
-    ClearEffects();
+    ClearHintEffects();
     foreach (var coverage in coverages) {
       coverage.From.PieceBorderColor = borderColor.Inspected;
       coverage.From.PulsePiece = true;
@@ -446,7 +395,7 @@ public class Player : MonoBehaviour {
     }
 
     if (clickedAgain && !wasDoubleClicked) {
-      ApplyEffects();
+      ApplyHintEffects();
       gameController.AudioManager.PlaySound(sound.Blur);
       return;
     }
@@ -477,7 +426,7 @@ public class Player : MonoBehaviour {
     }
 
     HideAlerts();
-    ClearEffects();
+    ClearHintEffects();
 
     Dragged = piece;
     draggedMoves = moves;
@@ -499,7 +448,7 @@ public class Player : MonoBehaviour {
     if (Dragged == null) return;
     gameController.AudioManager.PlaySound(sound.DragReset);
     ClearDragged();
-    ApplyEffects();
+    ApplyHintEffects();
   }
 
   private void HandleSquareDropped(Square square) {
@@ -575,6 +524,7 @@ public class Player : MonoBehaviour {
   private void Awake() {
     gameController = GameController.Instance;
     uiController = UIController.Instance;
+    squareStateProvider = new(gameController, this);
   }
 
   #endregion
