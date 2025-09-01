@@ -179,12 +179,12 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
     set => pieceDisplay.alertBlocked.enabled = value;
   }
 
-  public bool ShowAlerts {
-    get => pieceDisplay.alertGreen.gameObject.activeSelf;
+  public bool HideAlerts {
+    get => !pieceDisplay.alertGreen.gameObject.activeSelf;
     set {
-      pieceDisplay.alertGreen.gameObject.SetActive(value);
-      pieceDisplay.alertRed.gameObject.SetActive(value);
-      pieceDisplay.alertBlocked.gameObject.SetActive(value);
+      pieceDisplay.alertGreen.gameObject.SetActive(!value);
+      pieceDisplay.alertRed.gameObject.SetActive(!value);
+      pieceDisplay.alertBlocked.gameObject.SetActive(!value);
     }
   }
 
@@ -193,6 +193,26 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
   #region Methods
 
   public static char FileIndexToChar(int file) => (char)('a' + file);
+
+  public void Apply(SquareState state) {
+    if (state.TargetColor.HasValue) TargetColor = state.TargetColor.Value;
+    if (state.BorderColor.HasValue) BorderColor = state.BorderColor.Value;
+    if (state.PieceBorderColor.HasValue) PieceBorderColor = state.PieceBorderColor.Value;
+
+    HighlightVisible = state.HighlightVisible;
+    TargetVisible = state.TargetVisible;
+    BorderVisible = state.BorderVisible;
+    ScreenVisible = state.ScreenVisible;
+    OpponentCoverageOpacity = state.OpponentCoverageOpacity;
+    PlayerCoverageOpacity = state.PlayerCoverageOpacity;
+    WobblePiece = state.WobblePiece;
+    PulsePiece = state.PulsePiece;
+    TremblePiece = state.TremblePiece;
+    GreenAlert = state.GreenAlert;
+    RedAlert = state.RedAlert;
+    BlockedAlert = state.BlockedAlert;
+    HideAlerts = state.HideAlerts;
+  }
 
   public void ResetPieceBorderColor() => PieceBorderColor = defaultPieceBorderColor;
 
