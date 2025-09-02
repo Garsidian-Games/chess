@@ -7,6 +7,7 @@ public class PlayersTurn : MonoBehaviour {
   #region Constants
 
   private const string BusyText = "...";
+  private const string ActiveText = "Hide";
 
   #endregion
 
@@ -43,6 +44,11 @@ public class PlayersTurn : MonoBehaviour {
   public bool HintBusy {
     get => hintText.text == BusyText;
     set => hintText.text = value ? BusyText : originalHintText;
+  }
+
+  public bool HintActive {
+    get => hintText.text == ActiveText;
+    set => hintText.text = value ? ActiveText : originalHintText;
   }
 
   #endregion

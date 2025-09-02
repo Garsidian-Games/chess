@@ -12,9 +12,20 @@ public sealed class SquareState {
 
   #region Internal
 
+  private enum ModificationType {
+    HideAlerts,
+    CoverageFrom,
+    CoverageTo,
+    MovesFrom,
+    MovesTo,
+    MoveHint,
+  }
+
   #endregion
 
   #region Fields
+
+  private readonly Player player;
 
   #endregion
 
@@ -64,7 +75,23 @@ public sealed class SquareState {
 
   private static float CoverageOpacityFor(int count) => CoverageOpacity[Mathf.Min(count, CoverageOpacity.Length - 1)];
 
+  public SquareState WithoutAlerts() => new(this, ModificationType.HideAlerts);
+
+  public SquareState CoverageFrom(Color color) => new(this, ModificationType.CoverageFrom, color);
+
+  public SquareState CoverageTo() => new(this, ModificationType.CoverageTo);
+
+  public SquareState MovesFrom(Color color) => new(this, ModificationType.MovesFrom, color);
+
+  public SquareState MovesTo(Color color) => new(this, ModificationType.MovesTo, color);
+
+  public SquareState MoveHint() => new(this, ModificationType.MoveHint, player.BorderColorInspected);
+
   public void Apply() => Square.Apply(this);
+
+  public override string ToString() {
+    return $"SquareState(Square={Square})";
+  }
 
   #endregion
 
@@ -78,11 +105,72 @@ public sealed class SquareState {
 
   #region Constructor
 
-  public SquareState(Square square) {
-    Square = square;
+  public SquareState(SquareState state) {
+    player = state.player;
+    Square = state.Square;
+    TargetColor = state.TargetColor;
+    BorderColor = state.BorderColor;
+    PieceBorderColor = state.PieceBorderColor;
+    HighlightVisible = state.HighlightVisible;
+    TargetVisible = state.TargetVisible;
+    BorderVisible = state.BorderVisible;
+    ScreenVisible = state.ScreenVisible;
+    OpponentCoverageOpacity = state.OpponentCoverageOpacity;
+    PlayerCoverageOpacity = state.PlayerCoverageOpacity;
+    WobblePiece = state.WobblePiece;
+    PulsePiece = state.PulsePiece;
+    TremblePiece = state.TremblePiece;
+    GreenAlert = state.GreenAlert;
+    RedAlert = state.RedAlert;
+    BlockedAlert = state.BlockedAlert;
+    HideAlerts = state.HideAlerts;
+  }
+
+  private SquareState(SquareState state, ModificationType modification, Color? color = null) : this(state) {
+    switch (modification) {
+      case ModificationType.HideAlerts:
+        HideAlerts = true;
+        break;
+      case ModificationType.CoverageFrom:
+        HideAlerts = true;
+        PulsePiece = true;
+        PieceBorderColor = color.Value;
+        break;
+      case ModificationType.CoverageTo:
+        HideAlerts = true;
+        HighlightVisible = true;
+        break;
+      case ModificationType.MovesFrom:
+        HideAlerts = true;
+        WobblePiece = true;
+        PieceBorderColor = color.Value;
+        break;
+      case ModificationType.MovesTo:
+        TargetColor = color.Value;
+        TargetVisible = true;
+        TremblePiece = true;
+        break;
+      case ModificationType.MoveHint:
+        HighlightVisible = true;
+        BorderColor = color;
+        BorderVisible = true;
+        break;
+    }
+  }
+
+  public SquareState(SquareState state, Move hint) : this(state) {
+    if (hint.From == Square) {
+      PieceBorderColor = player.BorderColorInspected;
+      PulsePiece = true;
+    } else if (hint.To == Square) {
+      BorderColor = player.BorderColorInspected;
+      HighlightVisible = true;
+    }
   }
 
   public SquareState(Square square, Player player, GameState gameState, IEnumerable<Move> captureMoves, IEnumerable<Coverage> dangers) {
+    this.player = player;
+
     var boardState = gameState.BoardState;
     var coverageMap = boardState.CoverageMap;
 

@@ -198,6 +198,7 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
     if (state.TargetColor.HasValue) TargetColor = state.TargetColor.Value;
     if (state.BorderColor.HasValue) BorderColor = state.BorderColor.Value;
     if (state.PieceBorderColor.HasValue) PieceBorderColor = state.PieceBorderColor.Value;
+    else ResetPieceBorderColor();
 
     HighlightVisible = state.HighlightVisible;
     TargetVisible = state.TargetVisible;

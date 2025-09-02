@@ -14,6 +14,12 @@ public class Player : MonoBehaviour {
 
   #region Internal
 
+  private enum Mode {
+    Standard,
+    CoverageClick,
+    MoveClick,
+  }
+
   [System.Serializable] public class PieceEvent : UnityEvent<Piece> { }
   [System.Serializable] public class SideEvent : UnityEvent<SideType> { }
 
@@ -92,9 +98,9 @@ public class Player : MonoBehaviour {
   private Move awaitingPromotion;
   private Move[] draggedMoves;
 
-  private Move hint;
-
   private SquareStateProvider squareStateProvider;
+
+  private Mode mode;
 
   #endregion
 
@@ -126,6 +132,8 @@ public class Player : MonoBehaviour {
       if (side == SideType.Black) PlayerPrefs.SetInt(prefPlayAsBlack, 1);
       else PlayerPrefs.DeleteKey(prefPlayAsBlack);
 
+      squareStateProvider.Clear();
+
       OnSideChanged.Invoke(side);
       SyncCoverage();
     }
@@ -135,7 +143,13 @@ public class Player : MonoBehaviour {
 
   public Piece Dragged { get; private set; }
 
+  public Color TargetColor => targetColor;
+
   public Color BorderColorInspected => borderColor.Inspected;
+
+  public Color BorderColorOpponent => borderColor.Opponent;
+
+  public Color BorderColorPlayer => borderColor.Player;
 
   #endregion
 
@@ -165,39 +179,28 @@ public class Player : MonoBehaviour {
     );
   }
 
-  public void ToggleHint(Move move) {
-    if (hint == move) {
-      ClearHintEffects();
-      hint = null;
-    } else {
-      hint = move;
-      ApplyHintEffects();
-    }
+  public bool ToggleHint(Move move) {
+    squareStateProvider.Hint = move;
+    Apply(squareStateProvider.Standard);
+    return squareStateProvider.Hint == move;
   }
 
   private void SyncCoverage() {
-    ClearHintEffects();
-    hint = null;
-
-    foreach (var squareState in squareStateProvider.SquareStates) squareState.Apply();
-
-    ApplyHintEffects();
+    squareStateProvider.Hint = null;
+    Apply(squareStateProvider.Standard);
   }
 
-  private void ClearHintEffects() {
-    if (hint == null) return;
-    hint.From.ResetPieceBorderColor();
-    hint.From.PulsePiece = false;
-    hint.To.BorderVisible = false;
-    hint.To.HighlightVisible = false;
+  private void Refresh() => Apply(mode);
+
+  private void Apply(Mode mode) {
+    foreach (var squareState in squareStates) squareState.Apply();
   }
 
-  private void ApplyHintEffects() {
-    if (hint == null) return;
-    hint.From.PieceBorderColor = borderColor.Inspected;
-    hint.From.PulsePiece = true;
-    hint.To.BorderColor = borderColor.Inspected;
-    hint.To.HighlightVisible = true;
+  private SquareState[] For(Mode mode) {
+    this.mode = mode;
+    return mode switch {
+      Mode.CoverageClick => 
+    }
   }
 
   private void ClearDragged() {
@@ -249,7 +252,6 @@ public class Player : MonoBehaviour {
       var hasCoverage = coverages.Count() > 0;
 
       if (!hasCoverage) {
-        ApplyHintEffects();
         gameController.AudioManager.PlaySound(sound.Stuck);
         return;
       }
@@ -258,11 +260,7 @@ public class Player : MonoBehaviour {
       clearedAt = null;
       gameController.AudioManager.PlaySound(sound.Focus);
       Clicked = square;
-      Clicked.PieceBorderColor = _borderColor;
-      Clicked.PulsePiece = true;
-      HideAlerts();
-      ClearHintEffects();
-      foreach (var coverage in coverages) coverage.To.HighlightVisible = true;
+      Apply(squareStateProvider.CoverageFrom(Clicked, coverages, _borderColor));
       return;
     }
 
@@ -271,17 +269,7 @@ public class Player : MonoBehaviour {
     clickedAt = Time.time;
     clearedAt = null;
     Clicked = square;
-    Clicked.PieceBorderColor = _borderColor;
-    Clicked.WobblePiece = true;
-    HideAlerts();
-    ClearHintEffects();
-    foreach (var move in moves) {
-      bool isHint = hint == move;
-      move.To.TargetColor = targetColor;
-      move.To.TremblePiece = true;
-      move.To.HighlightVisible = isHint;
-      if (isHint) move.To.BorderColor = borderColor.Inspected;
-    }
+    Apply(squareStateProvider.MovesFor(Clicked, moves, _borderColor));
   }
 
   private void Click(Square square) {
@@ -290,7 +278,6 @@ public class Player : MonoBehaviour {
     //Debug.Log(hasCoverage ? sound.Focus : sound.Empty);
     gameController.AudioManager.PlaySound(hasCoverage ? sound.Focus : sound.Empty);
     if (!hasCoverage) {
-      ApplyHintEffects();
       return;
     }
     clickedAt = Time.time;
@@ -298,7 +285,6 @@ public class Player : MonoBehaviour {
     Clicked = square;
     Clicked.BorderColor = borderColor.Inspected;
     HideAlerts();
-    ClearHintEffects();
     foreach (var coverage in coverages) {
       coverage.From.PieceBorderColor = borderColor.Inspected;
       coverage.From.PulsePiece = true;
@@ -306,10 +292,10 @@ public class Player : MonoBehaviour {
   }
 
   private void AcceptHint() {
-    if (hint == null) return;
+    if (squareStateProvider.Hint == null) return;
     ClearClicked();
-    Make(hint, sound.Move);
-    //Debug.Log("Accept Hint!");
+    Make(squareStateProvider.Hint, sound.Move);
+    Debug.Log("Accept Hint!");
   }
 
   private bool ClickToMove(Square square) {
@@ -371,7 +357,7 @@ public class Player : MonoBehaviour {
       return;
     }
 
-    if (hint != null && hint.To == square) {
+    if (squareStateProvider.Hint != null && squareStateProvider.Hint.To == square) {
       AcceptHint();
       return;
     }
@@ -395,7 +381,6 @@ public class Player : MonoBehaviour {
     }
 
     if (clickedAgain && !wasDoubleClicked) {
-      ApplyHintEffects();
       gameController.AudioManager.PlaySound(sound.Blur);
       return;
     }
@@ -426,7 +411,6 @@ public class Player : MonoBehaviour {
     }
 
     HideAlerts();
-    ClearHintEffects();
 
     Dragged = piece;
     draggedMoves = moves;
@@ -435,7 +419,7 @@ public class Player : MonoBehaviour {
 
     foreach (var s in uiController.Board.Squares) {
       bool hasMove = moves.Any(move => move.To == s);
-      bool isHint = hint != null && hint.To == s;
+      bool isHint = squareStateProvider.Hint != null && squareStateProvider.Hint.To == s;
 
       s.ScreenVisible = !hasMove;
       s.TremblePiece = hasMove;
@@ -448,7 +432,6 @@ public class Player : MonoBehaviour {
     if (Dragged == null) return;
     gameController.AudioManager.PlaySound(sound.DragReset);
     ClearDragged();
-    ApplyHintEffects();
   }
 
   private void HandleSquareDropped(Square square) {
@@ -464,7 +447,7 @@ public class Player : MonoBehaviour {
   private void HandleSquareEntered(Square square) {
     if (Dragged == null) return;
     if (!draggedMoves.Any(move => move.To == square)) return;
-    bool isHint = hint != null && hint.To == square;
+    bool isHint = squareStateProvider.Hint != null && squareStateProvider.Hint.To == square;
 
     square.BorderColor = isHint ? borderColor.Inspected : borderColor.Player;
     if (gameController.GameManager.GameState.BoardState.IsPieceOn(square))

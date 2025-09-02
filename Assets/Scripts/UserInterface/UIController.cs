@@ -222,8 +222,9 @@ public class UIController : MonoBehaviour {
     if (!player.IsTurnToMove) return;
 
     PlaySound(sound.tap);
-    if (hints.ContainsKey(gameController.GameManager.GameState)) player.ToggleHint(hints[gameController.GameManager.GameState]);
-    else {
+    if (hints.ContainsKey(gameController.GameManager.GameState)) {
+      permanent.playersTurn.HintActive = player.ToggleHint(hints[gameController.GameManager.GameState]);
+    } else {
       gettingHint = true;
       permanent.playersTurn.HintBusy = true;
       gameController.StockfishMananger.StartSearch(gameController.GameManager.GameState.ToFEN(), Player.HintSearchDepth);
@@ -489,6 +490,7 @@ public class UIController : MonoBehaviour {
     var hint = gameController.GameManager.GameState.ConvertUciToMove(gameController.StockfishMananger.BestMove, player.SideType);
     gettingHint = false;
     permanent.playersTurn.HintBusy = false;
+    permanent.playersTurn.HintActive = true;
     hints[gameController.GameManager.GameState] = hint;
     player.ToggleHint(hint);
   }
