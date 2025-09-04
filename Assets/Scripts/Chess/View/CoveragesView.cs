@@ -1,16 +1,12 @@
 using UnityEngine;
 using System.Linq;
 
-public sealed class CoveragesView : BaseView {
+public sealed class CoveragesView : PieceView {
   #region Constants
 
   #endregion
 
   #region Properties
-
-  public readonly Square From;
-
-  public readonly Piece Piece;
 
   private readonly Coverage[] coverages;
 
@@ -41,9 +37,7 @@ public sealed class CoveragesView : BaseView {
 
   #region Constructor
 
-  public CoveragesView(Square from, ViewState viewState, Player player) : base(viewState, player) {
-    From = from;
-    Piece = GameState.BoardState[From];
+  public CoveragesView(Square from, ViewState viewState, Player player) : base(from, viewState, player) {
     coverages = GameState.BoardState.CoverageMap[Piece, From];
     borderColor = player.BorderColorFor(Piece.SideType);
   }

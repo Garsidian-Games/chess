@@ -58,6 +58,8 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
 
   private Piece piece;
 
+  private SquareState applied;
+
   #endregion
 
   #region Events
@@ -93,17 +95,9 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
     set => highlight.enabled = value;
   }
 
-  public Color TargetColor {
-    get => target.color;
-    set {
-      target.color = value;
-      TargetVisible = true;
-    }
-  }
-
-  public bool TargetVisible {
-    get => target.enabled;
-    set => target.enabled = value;
+  public bool PieceVisible {
+    get => pieceDisplay.icon.enabled;
+    set => pieceDisplay.icon.enabled = value;
   }
 
   public Color BorderColor {
@@ -140,6 +134,7 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
       piece = value;
       pieceDisplay.icon.sprite = piece == null ? defaultPieceIcon : piece.Icon;
       pieceDisplay.border.sprite = piece == null ? defaultPieceBorder : piece.Border;
+      PieceVisible = true;
       ResetPieceBorderColor();
     }
   }
@@ -185,14 +180,19 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
 
   public static char FileIndexToChar(int file) => (char)('a' + file);
 
+  public void Reset() {
+    if (applied == null) return;
+    Apply(applied);
+  }
+
   public void Apply(SquareState state) {
-    if (state.TargetColor.HasValue) TargetColor = state.TargetColor.Value;
+    applied = state;
+
     if (state.BorderColor.HasValue) BorderColor = state.BorderColor.Value;
     if (state.PieceBorderColor.HasValue) PieceBorderColor = state.PieceBorderColor.Value;
     else ResetPieceBorderColor();
 
     HighlightVisible = state.HighlightVisible;
-    TargetVisible = state.TargetVisible;
     BorderVisible = state.BorderVisible;
     ScreenVisible = state.ScreenVisible;
     OpponentCoverageOpacity = state.OpponentCoverageOpacity;
@@ -203,6 +203,7 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
     GreenAlert = state.GreenAlert;
     RedAlert = state.RedAlert;
     BlockedAlert = state.BlockedAlert;
+    PieceVisible = state.PieceVisible;
   }
 
   public void ResetPieceBorderColor() => PieceBorderColor = defaultPieceBorderColor;

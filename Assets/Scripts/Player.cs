@@ -14,12 +14,6 @@ public class Player : MonoBehaviour {
 
   #region Internal
 
-  private enum Mode {
-    Standard,
-    CoverageClick,
-    MoveClick,
-  }
-
   [System.Serializable] public class PieceEvent : UnityEvent<Piece> { }
   [System.Serializable] public class SideEvent : UnityEvent<SideType> { }
 
@@ -79,7 +73,6 @@ public class Player : MonoBehaviour {
   [SerializeField] private Sound sound;
 
   [Header("Settings")]
-  [SerializeField] private Color targetColor;
   [SerializeField] private BorderColor borderColor;
 
   [Header("Configuration")]
@@ -99,8 +92,6 @@ public class Player : MonoBehaviour {
   private Move[] draggedMoves;
 
   private SquareStateProvider squareStateProvider;
-
-  private Mode mode;
 
   #endregion
 
@@ -142,8 +133,6 @@ public class Player : MonoBehaviour {
   public Square Clicked { get; private set; }
 
   public Piece Dragged { get; private set; }
-
-  public Color TargetColor => targetColor;
 
   public Color BorderColorInspected => borderColor.Inspected;
 
@@ -192,15 +181,7 @@ public class Player : MonoBehaviour {
     if (Dragged == null) return;
     Dragged = null;
     draggedMoves = null;
-
-    foreach (var square in uiController.Board.Squares) {
-      square.ScreenVisible = false;
-      square.BorderVisible = false;
-      square.TremblePiece = false;
-      square.HighlightVisible = false;
-      square.ResetPieceBorderColor();
-    }
-
+    squareStateProvider.Reset();
     OnDragEnd.Invoke();
   }
 
@@ -265,7 +246,7 @@ public class Player : MonoBehaviour {
     if (squareStateProvider.Hint == null) return;
     ClearClicked();
     Make(squareStateProvider.Hint, sound.Move);
-    Debug.Log("Accept Hint!");
+    //Debug.Log("Accept Hint!");
   }
 
   private bool ClickToMove(Square square) {
@@ -384,16 +365,7 @@ public class Player : MonoBehaviour {
     draggedMoves = moves;
     gameController.AudioManager.PlaySound(sound.DragPickup);
     OnDragStart.Invoke(Dragged);
-
-    foreach (var s in uiController.Board.Squares) {
-      bool hasMove = moves.Any(move => move.To == s);
-      bool isHint = squareStateProvider.Hint != null && squareStateProvider.Hint.To == s;
-
-      s.ScreenVisible = !hasMove;
-      s.TremblePiece = hasMove;
-      s.HighlightVisible = isHint;
-      if (isHint) s.BorderColor = borderColor.Inspected;
-    }
+    squareStateProvider.Drag(square);
   }
 
   private void HandleSquareDragEnded(Square square) {
@@ -414,19 +386,12 @@ public class Player : MonoBehaviour {
 
   private void HandleSquareEntered(Square square) {
     if (Dragged == null) return;
-    if (!draggedMoves.Any(move => move.To == square)) return;
-    bool isHint = squareStateProvider.Hint != null && squareStateProvider.Hint.To == square;
-
-    square.BorderColor = isHint ? borderColor.Inspected : borderColor.Player;
-    if (gameController.GameManager.GameState.BoardState.IsPieceOn(square))
-      square.PieceBorderColor = borderColor.Opponent;
+    squareStateProvider.DragEnter(square);
   }
 
   private void HandleSquareExited(Square square) {
     if (Dragged == null) return;
-
-    square.BorderVisible = false;
-    square.ResetPieceBorderColor();
+    squareStateProvider.DragExit(square);
   }
 
   private void HandleMoved(Move _) {

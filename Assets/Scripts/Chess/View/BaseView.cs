@@ -38,6 +38,8 @@ public abstract class BaseView {
 
   public SquareState this[Square square] => For(square);
 
+  protected virtual bool ApplicableHint => viewState.HasHint;
+
   #endregion
 
   #region Methods
@@ -48,8 +50,8 @@ public abstract class BaseView {
     foreach (var square in viewState.BoardState.Squares) For(square).Apply();
   }
 
-  private SquareState For(Square square) {
-    if (viewState.HasHint) {
+  protected virtual SquareState For(Square square) {
+    if (ApplicableHint) {
       if (viewState.Hint.From == square) return GetHintFrom(square);
       if (viewState.Hint.To == square) return GetHintTo(square);
     }
@@ -57,26 +59,18 @@ public abstract class BaseView {
     return Get(square);
   }
 
-  private SquareState GetHintFrom(Square square) {
-    if (hintFrom == null) hintFrom = CreateHintFrom(square);
-    return hintFrom;
-  }
-
-  private SquareState GetHintTo(Square square) {
-    if (hintTo == null) hintTo = CreateHintTo(square);
-    return hintTo;
-  }
-
-  protected virtual SquareState Get(Square square) {
-    if (!state.ContainsKey(square)) state[square] = Create(square);
-    return state[square];
-  }
-
   protected abstract SquareState Create(Square square);
 
   protected abstract SquareState CreateHintFrom(Square square);
 
   protected abstract SquareState CreateHintTo(Square square);
+
+  protected virtual SquareState.SquareStateOptions StandardOptionsForHintTo(Square square) {
+    var opts = StandardOptionsFor(square, false);
+    opts.HighlightVisible = true;
+    opts.BorderColor = player.BorderColorInspected;
+    return opts;
+  }
 
   protected virtual SquareState.SquareStateOptions StandardOptionsFor(Square square, bool withAlerts = true) {
     var boardState = GameState.BoardState;
@@ -115,14 +109,29 @@ public abstract class BaseView {
       Square = square,
       OpponentCoverageOpacity = player.IsWhite ? blackOpacity : whiteOpacity,
       PlayerCoverageOpacity = player.IsWhite ? whiteOpacity : blackOpacity,
-      GreenAlert = withAlerts && CaptureMoves.Any(m => m.From == square) || Dangers.Any(c => c.From == square),
-      RedAlert = withAlerts && CaptureMoves.Any(m => m.To == square) || Dangers.Any(c => c.To == square),
+      GreenAlert = withAlerts && (CaptureMoves.Any(m => m.From == square) || Dangers.Any(c => c.From == square)),
+      RedAlert = withAlerts && (CaptureMoves.Any(m => m.To == square) || Dangers.Any(c => c.To == square)),
       BlockedAlert = withAlerts && isBlocked,
       PulsePiece = borderColorForCheck.HasValue,
       WobblePiece = borderColorForCheck.HasValue,
       PieceBorderColor = borderColorForCheck,
       BorderColor = borderColorForCheck,
     };
+  }
+
+  private SquareState Get(Square square) {
+    if (!state.ContainsKey(square)) state[square] = Create(square);
+    return state[square];
+  }
+
+  private SquareState GetHintFrom(Square square) {
+    if (hintFrom == null) hintFrom = CreateHintFrom(square);
+    return hintFrom;
+  }
+
+  private SquareState GetHintTo(Square square) {
+    if (hintTo == null) hintTo = CreateHintTo(square);
+    return hintTo;
   }
 
   #endregion

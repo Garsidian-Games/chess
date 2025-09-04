@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Assertions;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,6 +13,7 @@ public sealed class SquareStateProvider {
 
   public enum ProviderMode {
     Standard,
+    Drag,
     Moves,
     Coverages,
   }
@@ -34,7 +36,7 @@ public sealed class SquareStateProvider {
 
   private ViewState viewState;
 
-  private BaseView clickedView;
+  private BaseView activeView;
 
   #endregion
 
@@ -84,7 +86,7 @@ public sealed class SquareStateProvider {
 
   public void Reset() {
     mode = ProviderMode.Standard;
-    clickedView = null;
+    activeView = null;
     Apply();
   }
 
@@ -95,14 +97,32 @@ public sealed class SquareStateProvider {
 
   public void Click(Square square, ProviderMode mode) {
     this.mode = mode;
-    clickedView = For(square, mode);
+    activeView = For(square, mode);
     Apply();
+  }
+
+  public void Drag(Square square) {
+    mode = ProviderMode.Drag;
+    activeView = For(square, mode);
+    Apply();
+  }
+
+  public void DragEnter(Square square) {
+    Assert.IsTrue(mode == ProviderMode.Drag);
+    (activeView as DragView).Enter(square);
+    Apply();
+  }
+
+  public void DragExit(Square square) {
+    Assert.IsTrue(mode == ProviderMode.Drag);
+    if ((activeView as DragView).Exit(square)) Apply();
   }
 
   private BaseView For(Square square, ProviderMode mode) {
     return mode switch {
-      ProviderMode.Coverages => new CoveragesView(square, ViewState, player),
+      ProviderMode.Drag => new DragView(square, ViewState, player),
       ProviderMode.Moves => new MovesView(square, ViewState, player),
+      ProviderMode.Coverages => new CoveragesView(square, ViewState, player),
       _ => throw new System.NotImplementedException(string.Format("{0} is not a valid click mode", mode)),
     };
   }
@@ -112,9 +132,10 @@ public sealed class SquareStateProvider {
       case ProviderMode.Standard:
         StandardView.Apply();
         break;
+      case ProviderMode.Drag:
       case ProviderMode.Moves:
       case ProviderMode.Coverages:
-        clickedView.Apply();
+        activeView.Apply();
         break;
     }
   }
