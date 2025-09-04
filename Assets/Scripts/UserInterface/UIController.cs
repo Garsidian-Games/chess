@@ -87,7 +87,7 @@ public class UIController : MonoBehaviour {
 
   private readonly Dictionary<GameState, Move> hints = new();
 
-  private bool gettingHint;
+  private GameState gettingHintFor;
 
   private bool useMoveTimer;
 
@@ -127,6 +127,8 @@ public class UIController : MonoBehaviour {
 
     window.menu.CanResetGame = !isRoot;
     window.menu.CanExportGame = canUndo;
+
+    permanent.playersTurn.HintBusy = gettingHintFor != null;
 
     permanent.readyCheckModal.Display(isRoot && !player.IsTurnToMove);
     permanent.opponentsTurn.Display(!isMate && !player.IsTurnToMove);
@@ -218,16 +220,16 @@ public class UIController : MonoBehaviour {
   }
 
   private void HandleHint() {
-    if (gettingHint) return;
+    if (gettingHintFor != null) return;
     if (!player.IsTurnToMove) return;
 
     PlaySound(sound.tap);
     if (hints.ContainsKey(gameController.GameManager.GameState)) {
       permanent.playersTurn.HintActive = player.ToggleHint(hints[gameController.GameManager.GameState]);
     } else {
-      gettingHint = true;
+      gettingHintFor = gameController.GameManager.GameState;
       permanent.playersTurn.HintBusy = true;
-      gameController.StockfishMananger.StartSearch(gameController.GameManager.GameState.ToFEN(), Player.HintSearchDepth);
+      gameController.StockfishMananger.StartSearch(gettingHintFor.ToFEN(), Player.HintSearchDepth);
     }
   }
 
@@ -485,14 +487,17 @@ public class UIController : MonoBehaviour {
   #region Lifecycle
 
   private void Update() {
-    if (!gettingHint) return;
+    if (gettingHintFor == null) return;
     if (!gameController.StockfishMananger.HasBestMove) return;
     var hint = gameController.GameManager.GameState.ConvertUciToMove(gameController.StockfishMananger.BestMove, player.SideType);
-    gettingHint = false;
-    permanent.playersTurn.HintBusy = false;
-    permanent.playersTurn.HintActive = true;
-    hints[gameController.GameManager.GameState] = hint;
-    player.ToggleHint(hint);
+    hints[gettingHintFor] = hint;
+
+    if (gettingHintFor == gameController.GameManager.GameState) {
+      permanent.playersTurn.HintActive = true;
+      player.ToggleHint(hint);
+    } else permanent.playersTurn.HintBusy = false;
+
+    gettingHintFor = null;
   }
 
   private void LateUpdate() {

@@ -179,15 +179,6 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
     set => pieceDisplay.alertBlocked.enabled = value;
   }
 
-  public bool HideAlerts {
-    get => !pieceDisplay.alertGreen.gameObject.activeSelf;
-    set {
-      pieceDisplay.alertGreen.gameObject.SetActive(!value);
-      pieceDisplay.alertRed.gameObject.SetActive(!value);
-      pieceDisplay.alertBlocked.gameObject.SetActive(!value);
-    }
-  }
-
   #endregion
 
   #region Methods
@@ -212,7 +203,6 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
     GreenAlert = state.GreenAlert;
     RedAlert = state.RedAlert;
     BlockedAlert = state.BlockedAlert;
-    HideAlerts = state.HideAlerts;
   }
 
   public void ResetPieceBorderColor() => PieceBorderColor = defaultPieceBorderColor;
