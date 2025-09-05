@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Linq;
 
-public sealed class MovesView : BaseMoveView {
+public sealed class MovesFromView : MovesView {
   #region Constants
 
   #endregion
@@ -25,7 +25,7 @@ public sealed class MovesView : BaseMoveView {
 
   #region Constructor
 
-  public MovesView(Square from, ViewState viewState, Player player) : base(from, viewState, player) { }
+  public MovesFromView(Square from, ViewState viewState, Player player) : base(from, viewState, player) { }
 
   #endregion
 }

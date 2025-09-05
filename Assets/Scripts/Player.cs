@@ -214,7 +214,7 @@ public class Player : MonoBehaviour {
       clearedAt = null;
       gameController.AudioManager.PlaySound(sound.Focus);
       Clicked = square;
-      squareStateProvider.Click(Clicked, SquareStateProvider.ProviderMode.Coverages);
+      squareStateProvider.Click(Clicked, SquareStateProvider.ProviderMode.CoveragesFrom);
       return;
     }
 
@@ -223,7 +223,7 @@ public class Player : MonoBehaviour {
     clickedAt = Time.time;
     clearedAt = null;
     Clicked = square;
-    squareStateProvider.Click(Clicked, SquareStateProvider.ProviderMode.Moves);
+    squareStateProvider.Click(Clicked, SquareStateProvider.ProviderMode.MovesFor);
   }
 
   private void Click(Square square) {
@@ -237,13 +237,7 @@ public class Player : MonoBehaviour {
     clickedAt = Time.time;
     clearedAt = null;
     Clicked = square;
-
-    // port into view system
-    Clicked.BorderColor = borderColor.Inspected;
-    foreach (var coverage in coverages) {
-      coverage.From.PieceBorderColor = borderColor.Inspected;
-      coverage.From.PulsePiece = true;
-    }
+    squareStateProvider.Click(Clicked, SquareStateProvider.ProviderMode.CoveragesTo);
   }
 
   private void AcceptHint() {
@@ -369,7 +363,7 @@ public class Player : MonoBehaviour {
     draggedMoves = moves;
     gameController.AudioManager.PlaySound(sound.DragPickup);
     OnDragStart.Invoke(Dragged);
-    squareStateProvider.Drag(square);
+    squareStateProvider.DragFrom(square);
   }
 
   private void HandleSquareDragEnded(Square square) {

@@ -13,9 +13,35 @@ public sealed class SquareStateProvider {
 
   public enum ProviderMode {
     Standard,
-    Drag,
-    Moves,
-    Coverages,
+    DragFrom,
+    MovesFor,
+    CoveragesFrom,
+    CoveragesTo,
+  }
+
+  private class SquareViewCache {
+    private readonly Dictionary<ViewState, Dictionary<Square, SquareView>> views = new();
+    private readonly ProviderMode mode;
+
+    private SquareView Create(Square square, ViewState viewState, Player player) {
+      return mode switch {
+        ProviderMode.DragFrom => new DragFromView(square, viewState, player),
+        ProviderMode.MovesFor => new MovesFromView(square, viewState, player),
+        ProviderMode.CoveragesFrom => new CoveragesFromView(square, viewState, player),
+        ProviderMode.CoveragesTo => new CoveragesToView(square, viewState, player),
+        _ => throw new System.NotImplementedException(),
+      };
+    }
+
+    public SquareView Get(Square square, ViewState viewState, Player player) {
+      if (!views.ContainsKey(viewState)) views[viewState] = new();
+      if (!views[viewState].ContainsKey(square)) views[viewState][square] = Create(square, viewState, player);
+      return views[viewState][square];
+    }
+
+    public SquareViewCache(ProviderMode mode) {
+      this.mode = mode;
+    }
   }
 
   #endregion
@@ -30,7 +56,13 @@ public sealed class SquareStateProvider {
 
   private readonly Dictionary<ViewState, StandardView> standardViews = new();
 
-  private readonly Dictionary<ViewState, Dictionary<Square, CoveragesView>> coveragesViews = new();
+  private readonly SquareViewCache coveragesFromViews = new(ProviderMode.CoveragesFrom);
+
+  private readonly SquareViewCache coveragesToViews = new(ProviderMode.CoveragesTo);
+
+  private readonly SquareViewCache movesFromViews = new(ProviderMode.MovesFor);
+
+  private readonly SquareViewCache dragFromViews = new(ProviderMode.DragFrom);
 
   private ProviderMode mode;
 
@@ -101,28 +133,29 @@ public sealed class SquareStateProvider {
     Apply();
   }
 
-  public void Drag(Square square) {
-    mode = ProviderMode.Drag;
+  public void DragFrom(Square square) {
+    mode = ProviderMode.DragFrom;
     activeView = For(square, mode);
     Apply();
   }
 
   public void DragEnter(Square square) {
-    Assert.IsTrue(mode == ProviderMode.Drag);
-    (activeView as DragView).Enter(square);
+    Assert.IsTrue(mode == ProviderMode.DragFrom);
+    (activeView as DragFromView).Enter(square);
     Apply();
   }
 
   public void DragExit(Square square) {
-    Assert.IsTrue(mode == ProviderMode.Drag);
-    if ((activeView as DragView).Exit(square)) Apply();
+    Assert.IsTrue(mode == ProviderMode.DragFrom);
+    if ((activeView as DragFromView).Exit(square)) Apply();
   }
 
   private BaseView For(Square square, ProviderMode mode) {
     return mode switch {
-      ProviderMode.Drag => new DragView(square, ViewState, player),
-      ProviderMode.Moves => new MovesView(square, ViewState, player),
-      ProviderMode.Coverages => new CoveragesView(square, ViewState, player),
+      ProviderMode.DragFrom => dragFromViews.Get(square, ViewState, player),
+      ProviderMode.MovesFor => movesFromViews.Get(square, ViewState, player),
+      ProviderMode.CoveragesFrom => coveragesFromViews.Get(square, ViewState, player),
+      ProviderMode.CoveragesTo => coveragesToViews.Get(square, ViewState, player),
       _ => throw new System.NotImplementedException(string.Format("{0} is not a valid click mode", mode)),
     };
   }
@@ -132,11 +165,14 @@ public sealed class SquareStateProvider {
       case ProviderMode.Standard:
         StandardView.Apply();
         break;
-      case ProviderMode.Drag:
-      case ProviderMode.Moves:
-      case ProviderMode.Coverages:
+      case ProviderMode.DragFrom:
+      case ProviderMode.MovesFor:
+      case ProviderMode.CoveragesFrom:
+      case ProviderMode.CoveragesTo:
         activeView.Apply();
         break;
+      default:
+        throw new System.NotImplementedException(string.Format("{0} is not a valid mode!", Mode));
     }
   }
 

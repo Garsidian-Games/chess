@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public abstract class PieceView : BaseView {
+public abstract class PieceView : SquareView {
   #region Constants
 
   #endregion
@@ -42,7 +42,7 @@ public abstract class PieceView : BaseView {
 
   #region Constructor
 
-  public PieceView(Square from, ViewState viewState, Player player) : base(viewState, player) {
+  public PieceView(Square from, ViewState viewState, Player player) : base(from, viewState, player) {
     From = from;
     Piece = GameState.BoardState[From];
   }

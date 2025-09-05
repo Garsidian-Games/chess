@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 
-public sealed class DragView : BaseMoveView {
+public sealed class DragFromView : MovesView {
   #region Constants
 
   #endregion
@@ -76,7 +76,7 @@ public sealed class DragView : BaseMoveView {
 
   #region Constructor
 
-  public DragView(Square from, ViewState viewState, Player player) : base(from, viewState, player) { }
+  public DragFromView(Square from, ViewState viewState, Player player) : base(from, viewState, player) { }
 
   #endregion
 }
