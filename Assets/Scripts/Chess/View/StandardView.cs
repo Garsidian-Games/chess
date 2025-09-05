@@ -8,7 +8,22 @@ public sealed class StandardView : BaseView {
 
   #region Methods
 
-  protected override SquareState Create(Square square) => new(StandardOptionsFor(square));
+  protected override SquareState Create(Square square) {
+    var opts = StandardOptionsFor(square);
+
+    if (!GameState.IsRoot) {
+      if (GameState.BoardState.Move.From == square) {
+        opts.PieceBorder = GameState.BoardState.Move.Piece;
+        opts.PieceBorderColor = player.BorderColorLastMoved;
+      }
+
+      if (GameState.BoardState.Move.To == square) {
+        opts.PieceBorderColor = player.BorderColorLastMoved;
+      }
+    }
+
+    return new(opts);
+  }
 
   protected override SquareState CreateHintFrom(Square square) {
     var opts = StandardOptionsFor(square);

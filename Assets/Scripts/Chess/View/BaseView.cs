@@ -98,11 +98,11 @@ public abstract class BaseView {
       isBlocked = !coverageMap.From(square).Any(c => c.Other == null || c.Other.SideType != c.Piece.SideType);
     }
 
-    Color? borderColorForCheck = null;
+    Color? borderColor = null;
     if (boardState.WhiteInCheck && boardState.KingSquareFor(SideType.White) == square) {
-      borderColorForCheck = player.BorderColorFor(SideType.White);
+      borderColor = player.BorderColorFor(SideType.White);
     } else if (boardState.BlackInCheck && boardState.KingSquareFor(SideType.Black) == square) {
-      borderColorForCheck = player.BorderColorFor(SideType.Black);
+      borderColor = player.BorderColorFor(SideType.Black);
     }
 
     return new() {
@@ -112,10 +112,10 @@ public abstract class BaseView {
       GreenAlert = withAlerts && (CaptureMoves.Any(m => m.From == square) || Dangers.Any(c => c.From == square)),
       RedAlert = withAlerts && (CaptureMoves.Any(m => m.To == square) || Dangers.Any(c => c.To == square)),
       BlockedAlert = withAlerts && isBlocked,
-      PulsePiece = borderColorForCheck.HasValue,
-      WobblePiece = borderColorForCheck.HasValue,
-      PieceBorderColor = borderColorForCheck,
-      BorderColor = borderColorForCheck,
+      PulsePiece = borderColor.HasValue,
+      WobblePiece = borderColor.HasValue,
+      PieceBorderColor = borderColor,
+      BorderColor = borderColor,
     };
   }
 

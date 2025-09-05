@@ -128,6 +128,10 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
     set => SetCoverageOpacity(ref playerCoverageOpacity, value, coverage.player);
   }
 
+  public Piece PieceBorder {
+    set => pieceDisplay.border.sprite = value == null ? (piece == null ? defaultPieceBorder : piece.Border) : value.Border;
+  }
+
   public Piece Piece {
     get => piece;
     set {
@@ -187,6 +191,8 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
 
   public void Apply(SquareState state) {
     applied = state;
+
+    PieceBorder = state.PieceBorder;
 
     if (state.BorderColor.HasValue) BorderColor = state.BorderColor.Value;
     if (state.PieceBorderColor.HasValue) PieceBorderColor = state.PieceBorderColor.Value;

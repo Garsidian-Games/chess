@@ -59,6 +59,7 @@ public class Player : MonoBehaviour {
 
   [System.Serializable]
   public class BorderColor {
+    public Color LastMoved;
     public Color Inspected;
     public Color Opponent;
     public Color Player;
@@ -134,6 +135,8 @@ public class Player : MonoBehaviour {
 
   public Piece Dragged { get; private set; }
 
+  public Color BorderColorLastMoved => borderColor.LastMoved;
+
   public Color BorderColorInspected => borderColor.Inspected;
 
   public Color BorderColorOpponent => borderColor.Opponent;
@@ -195,7 +198,6 @@ public class Player : MonoBehaviour {
 
   private void Click(Piece piece, Square square) {
     bool playerPiece = piece.SideType == SideType;
-    var _borderColor = playerPiece ? borderColor.Player : borderColor.Opponent;
     var moves = gameController.GameManager.GameState.MovesFor(piece, square);
     var hasMoves = moves.Count() > 0;
 
@@ -235,6 +237,8 @@ public class Player : MonoBehaviour {
     clickedAt = Time.time;
     clearedAt = null;
     Clicked = square;
+
+    // port into view system
     Clicked.BorderColor = borderColor.Inspected;
     foreach (var coverage in coverages) {
       coverage.From.PieceBorderColor = borderColor.Inspected;

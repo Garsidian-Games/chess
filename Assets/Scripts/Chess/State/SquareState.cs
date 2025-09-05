@@ -12,6 +12,7 @@ public sealed class SquareState {
 
   public class SquareStateOptions {
     public Square Square { get; set; }
+    public Piece PieceBorder { get; set; }
     public float? OpponentCoverageOpacity { get; set; }
     public float? PlayerCoverageOpacity { get; set; }
     public Color? PieceBorderColor { get; set; }
@@ -40,6 +41,8 @@ public sealed class SquareState {
   #region Properties
 
   public readonly Square Square;
+
+  public readonly Piece PieceBorder;
 
   public readonly float OpponentCoverageOpacity;
 
@@ -93,6 +96,7 @@ public sealed class SquareState {
 
   public SquareState(SquareStateOptions options) {
     Square = options.Square;
+    PieceBorder = options.PieceBorder;
     OpponentCoverageOpacity = options.OpponentCoverageOpacity.Value;
     PlayerCoverageOpacity = options.PlayerCoverageOpacity.Value;
     PieceBorderColor = options.PieceBorderColor;
