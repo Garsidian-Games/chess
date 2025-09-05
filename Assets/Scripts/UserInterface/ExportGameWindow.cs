@@ -66,6 +66,7 @@ public class ExportGameWindow : UIWindow {
   #region Lifecycle
 
   protected override void Start() {
+    base.Start();
     copy.onClick.AddListener(HandleCopyClicked);
   }
 

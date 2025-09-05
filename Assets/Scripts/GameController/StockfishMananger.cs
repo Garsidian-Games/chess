@@ -12,8 +12,6 @@ public class StockfishMananger : MonoBehaviour {
 
   #region Fields
 
-  [SerializeField] private string[] nnueFiles;
-
   private IStockfishEngine engine;
 
   private string bestMove;
@@ -55,8 +53,11 @@ public class StockfishMananger : MonoBehaviour {
   }
 
   private IStockfishEngine CreateEngine() {
-#if UNITY_IOS && !UNITY_EDITOR
-    return new NativeStockfishEngineIOS(nnueFiles);
+#if UNITY_ANDROID && !UNITY_EDITOR
+    // Native .so plugin: Assets/Plugins/Android/arm64-v8a/libstockfish_unity.so
+    return new NativeStockfishEngineAndroid();
+#elif UNITY_IOS && !UNITY_EDITOR
+    return new NativeStockfishEngineIOS();
 #elif UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
     string stockfishPath = Application.dataPath + "/Editor/Stockfish/Mac/stockfish/stockfish-macos-m1-apple-silicon";
     return new ProcessStockfishEngine(stockfishPath);
@@ -71,17 +72,17 @@ public class StockfishMananger : MonoBehaviour {
     OnReady.Invoke();
   }
 
-  #endregion
+#endregion
 
-  #region Coroutines
+#region Coroutines
 
-  #endregion
+#endregion
 
-  #region Handlers
+#region Handlers
 
-  #endregion
+#endregion
 
-  #region Lifecycle
+#region Lifecycle
 
   private void OnDestroy() {
     engine.Dispose();
@@ -101,5 +102,5 @@ public class StockfishMananger : MonoBehaviour {
     } else engine.Update();
   }
 
-  #endregion
+#endregion
 }

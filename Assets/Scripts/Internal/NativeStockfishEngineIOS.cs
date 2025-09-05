@@ -1,3 +1,4 @@
+#if UNITY_IOS && !UNITY_EDITOR
 using System;
 using System.Collections.Concurrent;
 using System.IO;
@@ -5,25 +6,25 @@ using System.Runtime.InteropServices;
 using UnityEngine;
 
 public class NativeStockfishEngineIOS : IStockfishEngine {
-  #region Constants
+#region Constants
 
   private const string filePrefix = "file://";
 
   // Throttle polling if needed (seconds). 0 = every frame.
   //private const float POLL_INTERVAL = 0f;
 
-  #endregion
+#endregion
 
-  #region Internal
+#region Internal
 
   [DllImport("__Internal")] private static extern void _stockfish_start();
   [DllImport("__Internal")] private static extern void _stockfish_stop();
   [DllImport("__Internal")] private static extern void _stockfish_send(string cmd);
   [DllImport("__Internal")] static extern int _stockfish_read_copy([Out] byte[] dst, int maxLen);
 
-  #endregion
+#endregion
 
-  #region Fields
+#region Fields
 
   private static readonly ConcurrentQueue<string> output = new();
   private static bool engineRunning;
@@ -33,13 +34,13 @@ public class NativeStockfishEngineIOS : IStockfishEngine {
 
   private bool debugLogging = true;
 
-  #endregion
+#endregion
 
-  #region Events
+#region Events
 
-  #endregion
+#endregion
 
-  #region Properties
+#region Properties
 
   private string bestMove;
 
@@ -53,9 +54,9 @@ public class NativeStockfishEngineIOS : IStockfishEngine {
     }
   }
 
-  #endregion
+#endregion
 
-  #region Methods
+#region Methods
 
   public void Dispose() {
     if (!engineRunning) return;
@@ -133,19 +134,19 @@ public class NativeStockfishEngineIOS : IStockfishEngine {
     }
   }
 
-  #endregion
+#endregion
 
-  #region Coroutines
+#region Coroutines
 
-  #endregion
+#endregion
 
-  #region Handlers
+#region Handlers
 
-  #endregion
+#endregion
 
-  #region Constructor
+#region Constructor
 
-  public NativeStockfishEngineIOS(string[] nnueFiles) {
+  public NativeStockfishEngineIOS() {
     if (engineRunning) return;
     if (debugLogging) Debug.Log($"[Stockfish] Launching native engine for iOS");
 
@@ -154,14 +155,6 @@ public class NativeStockfishEngineIOS : IStockfishEngine {
 
     if (debugLogging) Debug.Log("[Stockfish] Engine started!");
 
-    var path = Application.streamingAssetsPath;
-    if (path.StartsWith(filePrefix))
-      path = path[filePrefix.Length..];
-
-    //foreach (var nnue in nnueFiles) {
-    //  SendCommand($"setoption name EvalFile value {Path.Combine(path, nnue)}");
-    //}
-
     SendCommand("uci");
     SendCommand("isready");
     WaitFor("readyok");
@@ -169,5 +162,6 @@ public class NativeStockfishEngineIOS : IStockfishEngine {
     if (debugLogging) Debug.Log("[Stockfish] Engine initialized and ready!");
   }
 
-  #endregion
+#endregion
 }
+#endif
