@@ -7,8 +7,11 @@ using System.Linq;
 
 public class Player : MonoBehaviour {
   #region Constants
-
+#if UNITY_ANDROID && !UNITY_EDITOR
+  public const int HintSearchDepth = 10;
+#else
   public const int HintSearchDepth = 18;
+#endif
 
   #endregion
 
@@ -65,9 +68,9 @@ public class Player : MonoBehaviour {
     public Color Player;
   }
 
-  #endregion
+#endregion
 
-  #region Fields
+#region Fields
 
   [Header("Audio")]
   [SerializeField] private Music music;
@@ -94,18 +97,18 @@ public class Player : MonoBehaviour {
 
   private SquareStateProvider squareStateProvider;
 
-  #endregion
+#endregion
 
-  #region Events
+#region Events
 
   [HideInInspector] public SideEvent OnSideChanged;
   [HideInInspector] public UnityEvent OnBeforePromotion;
   [HideInInspector] public PieceEvent OnDragStart;
   [HideInInspector] public UnityEvent OnDragEnd;
 
-  #endregion
+#endregion
 
-  #region Properties
+#region Properties
 
   public static Player Instance => GameObject.FindWithTag("Player").GetComponent<Player>();
 
@@ -143,9 +146,9 @@ public class Player : MonoBehaviour {
 
   public Color BorderColorPlayer => borderColor.Player;
 
-  #endregion
+#endregion
 
-  #region Methods
+#region Methods
 
   public Color BorderColorFor(SideType sideType) {
     return sideType == SideType ? borderColor.Player : borderColor.Opponent;
@@ -284,13 +287,13 @@ public class Player : MonoBehaviour {
     );
   }
 
-  #endregion
+#endregion
 
-  #region Coroutines
+#region Coroutines
 
-  #endregion
+#endregion
 
-  #region Handlers
+#region Handlers
 
   private void HandleGameReady() {
     SideType = PlayerPrefs.HasKey(prefPlayAsBlack) ? SideType.Black : SideType.White;
@@ -405,9 +408,9 @@ public class Player : MonoBehaviour {
     SyncCoverage();
   }
 
-  #endregion
+#endregion
 
-  #region Lifecycle
+#region Lifecycle
 
   private void Update() {
 #if UNITY_EDITOR
@@ -441,5 +444,5 @@ public class Player : MonoBehaviour {
     squareStateProvider = new(gameController, this);
   }
 
-  #endregion
+#endregion
 }

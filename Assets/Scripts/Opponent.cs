@@ -8,7 +8,11 @@ using System.Linq;
 public class Opponent : MonoBehaviour {
   #region Constants
 
+#if UNITY_ANDROID && !UNITY_EDITOR
+  public const int DepthPerStep = 3;
+#else
   public const int DepthPerStep = 8;
+#endif
 
   public const int DepthStepMin = 1;
 
