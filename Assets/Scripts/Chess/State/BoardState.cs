@@ -32,6 +32,8 @@ public sealed class BoardState {
 
   public readonly Piece[] Captured;
 
+  public readonly bool InsufficientMaterial;
+
   public bool IsRoot => Previous == null;
 
   public bool WhiteInCheck => coverageMap.InCheck(SideType.White);
@@ -164,6 +166,36 @@ public sealed class BoardState {
 
     state.Remove(move.From);
     state[move.To] = move.IsPromotion ? SideFor(move.Piece).For(promotion) : move.Piece;
+
+    var whitePieces = state.Where(kvp => kvp.Value.SideType == SideType.White);
+    var blackPieces = state.Where(kvp => kvp.Value.SideType == SideType.Black);
+
+    var whiteKing = whitePieces.First(kvp => kvp.Value.IsKing);
+    whitePieces = whitePieces.Where(kvp => !kvp.Value.IsKing);
+
+    var blackKing = blackPieces.First(kvp => kvp.Value.IsKing);
+    blackPieces = blackPieces.Where(kvp => !kvp.Value.IsKing);
+
+    int whiteCount = whitePieces.Count();
+    int blackCount = blackPieces.Count();
+
+    // K vs K
+    if (whiteCount == 0 && blackCount == 0) InsufficientMaterial = true;
+    else {
+      var whitePiece = whiteCount == 1 ? whitePieces.ElementAt(0) : default;
+      var blackPiece = blackCount == 1 ? blackPieces.ElementAt(0) : default;
+
+      if (whiteCount == 1 && blackCount == 1) {
+        // K+B vs K+B same color
+        if (whitePiece.Value.IsBishop && blackPiece.Value.IsBishop) InsufficientMaterial = whitePiece.Key.IsWhite == blackPiece.Key.IsWhite;
+      } else if (whiteCount == 0 && blackCount == 1) {
+        // K vs K+B or K vs K+N
+        InsufficientMaterial = blackPiece.Value.IsKnight || blackPiece.Value.IsBishop;
+      } else if (blackCount == 0 && whiteCount == 1) {
+        // K vs K+B or K vs K+N
+        InsufficientMaterial = whitePiece.Value.IsKnight || whitePiece.Value.IsBishop;
+      }
+    }
   }
 
   public BoardState(Board board, Side white, Side black) {

@@ -12,6 +12,8 @@ public class StockfishMananger : MonoBehaviour {
 
   #region Fields
 
+  [SerializeField] private string[] nnueFiles;
+
   private IStockfishEngine engine;
 
   private string bestMove;
@@ -52,9 +54,9 @@ public class StockfishMananger : MonoBehaviour {
     engine.StartSearch(fen, depth);
   }
 
-  private static IStockfishEngine CreateEngine() {
+  private IStockfishEngine CreateEngine() {
 #if UNITY_IOS && !UNITY_EDITOR
-    return new NativeStockfishEngineIOS();
+    return new NativeStockfishEngineIOS(nnueFiles);
 #elif UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
     string stockfishPath = Application.dataPath + "/Editor/Stockfish/Mac/stockfish/stockfish-macos-m1-apple-silicon";
     return new ProcessStockfishEngine(stockfishPath);

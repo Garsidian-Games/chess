@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Concurrent;
+using System.IO;
 using System.Runtime.InteropServices;
 using UnityEngine;
 
 public class NativeStockfishEngineIOS : IStockfishEngine {
   #region Constants
+
+  private const string filePrefix = "file://";
 
   // Throttle polling if needed (seconds). 0 = every frame.
   //private const float POLL_INTERVAL = 0f;
@@ -142,7 +145,7 @@ public class NativeStockfishEngineIOS : IStockfishEngine {
 
   #region Constructor
 
-  public NativeStockfishEngineIOS() {
+  public NativeStockfishEngineIOS(string[] nnueFiles) {
     if (engineRunning) return;
     if (debugLogging) Debug.Log($"[Stockfish] Launching native engine for iOS");
 
@@ -151,7 +154,14 @@ public class NativeStockfishEngineIOS : IStockfishEngine {
 
     if (debugLogging) Debug.Log("[Stockfish] Engine started!");
 
-    // handled in brdige
+    var path = Application.streamingAssetsPath;
+    if (path.StartsWith(filePrefix))
+      path = path[filePrefix.Length..];
+
+    //foreach (var nnue in nnueFiles) {
+    //  SendCommand($"setoption name EvalFile value {Path.Combine(path, nnue)}");
+    //}
+
     SendCommand("uci");
     SendCommand("isready");
     WaitFor("readyok");

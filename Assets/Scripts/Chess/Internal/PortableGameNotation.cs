@@ -56,6 +56,7 @@ public sealed class PortableGameNotation {
     GameState = new(board, white, black);
 
     bool isInvalid = false;
+    bool wasJustDot = false;
     Queue<string> parts = new(pgn.Split(" "));
     //Debug.Log(string.Join(":", pgn.Split(" ")));
     if (parts.Count == 0) isInvalid = true;
@@ -68,13 +69,19 @@ public sealed class PortableGameNotation {
 
       string moveStr;
       if (str.Contains('.')) {
+        wasJustDot = true;
         var subParts = str.Split('.');
         var moveNumberStr = subParts[0];
         moveStr = subParts[1];
-      } else moveStr = str;
+      } else {
+        wasJustDot = false;
+        moveStr = str;
+      }
 
       //Debug.Log(moveStr);
       if (moveStr.Length < 2) {
+        // support for `1. e4` vs `1.e4`
+        if (wasJustDot) continue;
         isInvalid = true;
         Debug.Log("Malformed text");
         break;

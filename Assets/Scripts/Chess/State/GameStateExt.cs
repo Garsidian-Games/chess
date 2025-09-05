@@ -10,7 +10,7 @@ public static class GameStateExt {
   /// Converts the current GameState into a valid Stockfish-ready FEN string.
   /// </summary>
   public static string ToFEN(this GameState gameState) {
-    StringBuilder fen = new StringBuilder();
+    StringBuilder fen = new();
 
     for (int rank = 7; rank >= 0; rank--) {
       int emptyCount = 0;
@@ -53,12 +53,6 @@ public static class GameStateExt {
     // En passant
     fen.Append(' ');
     fen.Append(GetEnPassantTarget(gameState));
-
-    fen.Append(' ');
-    fen.Append(gameState.HalfmoveClock);
-
-    fen.Append(' ');
-    fen.Append(gameState.FullmoveNumber);
 
     return fen.ToString();
   }

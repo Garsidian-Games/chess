@@ -19,7 +19,13 @@ public sealed class GameState {
 
   private readonly Dictionary<Move, Dictionary<PieceType, GameState>> cache = new();
 
+  private readonly Dictionary<string, int> fenHashCounts;
+
   private string _string;
+
+  private string fen;
+
+  private string fenHash;
 
   #endregion
 
@@ -39,15 +45,37 @@ public sealed class GameState {
 
   public readonly int FullmoveNumber;
 
+  public readonly bool ThreefoldRepetition;
+
+  public readonly bool FiftyMoveRule;
+
   public bool InCheck => BoardState.InCheck;
 
   public bool GameOver => IsMate || IsDraw;
 
   public bool IsMate => moveSet.IsMate;
 
-  public bool IsDraw => moveSet.IsStalemate;
+  public bool IsStalemate => moveSet.IsStalemate;
+
+  public bool InsufficientMaterial => BoardState.InsufficientMaterial;
+
+  public bool IsDraw => FiftyMoveRule || ThreefoldRepetition || InsufficientMaterial || IsStalemate;
 
   public Move[] Moves => moveSet.Moves;
+
+  public string FENFull {
+    get {
+      if (string.IsNullOrEmpty(fen)) fen = $"{FEN} {HalfmoveClock} {FullmoveNumber}";
+      return fen;
+    }
+  }
+
+  public string FEN {
+    get {
+      if (string.IsNullOrEmpty(fenHash)) fenHash = this.ToFEN();
+      return fenHash;
+    }
+  }
 
   #endregion
 
@@ -150,6 +178,14 @@ public sealed class GameState {
     if (BoardState.SideToMove == SideType.White) FullmoveNumber++;
 
     HalfmoveClock = move.IsCapture || move.Piece.IsPawn ? 0 : HalfmoveClock + 1;
+    FiftyMoveRule = HalfmoveClock == 100;
+
+    fenHashCounts = new(gameState.fenHashCounts);
+
+    if (fenHashCounts.ContainsKey(FEN)) {
+      fenHashCounts[FEN]++;
+      if (fenHashCounts[FEN] == 3) ThreefoldRepetition = true;
+    } else fenHashCounts[FEN] = 1;
   }
 
   public GameState(Board board, Side white, Side black) {
@@ -158,6 +194,8 @@ public sealed class GameState {
 
     HalfmoveClock = 0;
     FullmoveNumber = 1;
+
+    fenHashCounts = new() { { FEN, 1 } };
   }
 
   #endregion

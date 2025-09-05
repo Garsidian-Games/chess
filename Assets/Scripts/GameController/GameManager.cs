@@ -191,10 +191,11 @@ public class GameManager : MonoBehaviour {
     Save();
   }
 
-  public void Undo() {
+  public void Undo(SideType sideType) {
     timers.Remove(GameState);
 
-    GameState = GameState.Previous.Previous;
+    GameState = GameState.Previous;
+    if (GameState.BoardState.SideToMove != sideType) GameState = GameState.Previous;
     uiController.Board.Render(GameState);
 
     if (!timers.ContainsKey(GameState)) timers[GameState] = new(0f, 0f);
@@ -220,7 +221,7 @@ public class GameManager : MonoBehaviour {
   }
 
   private void Save() {
-    if (GameState.GameOver) ClearSave();
+    if (GameState.GameOver || GameState.IsRoot) ClearSave();
     else {
       //Debug.Log("Save");
       PlayerPrefs.SetString(SavedGameKey, ToString());

@@ -136,6 +136,7 @@ public class UIController : MonoBehaviour {
     bool isRoot = gameController.GameManager.GameState.BoardState.IsRoot;
     bool isMate = gameController.GameManager.GameState.IsMate;
     bool isDraw = gameController.GameManager.GameState.IsDraw;
+    bool gameOver = gameController.GameManager.GameState.GameOver;
     bool canUndo = gameController.GameManager.CanUndo;
 
     window.menu.CanResetGame = !isRoot;
@@ -159,7 +160,7 @@ public class UIController : MonoBehaviour {
       permanent.sideStatusBlack.BorderColor = player.IsWhite ? borderColor.Opponent : borderColor.Player;
     }
 
-    if (isMate) modal.gameOver.Show(isDraw, gameController.GameManager.GameState.BoardState.SideToMove);
+    if (gameOver) modal.gameOver.Show(gameController.GameManager.GameState);
     else {
       permanent.sideStatusWhite.InCheck = gameController.GameManager.GameState.BoardState.WhiteInCheck;
       permanent.sideStatusBlack.InCheck = gameController.GameManager.GameState.BoardState.BlackInCheck;
@@ -229,7 +230,7 @@ public class UIController : MonoBehaviour {
   private void HandleUndo() {
     modal.gameOver.Hide();
     PlaySound(sound.tap);
-    gameController.GameManager.Undo();
+    gameController.GameManager.Undo(player.SideType);
   }
 
   private void HandleHint() {
@@ -242,7 +243,7 @@ public class UIController : MonoBehaviour {
     } else {
       gettingHintFor = gameController.GameManager.GameState;
       permanent.playersTurn.HintBusy = true;
-      gameController.StockfishMananger.StartSearch(gettingHintFor.ToFEN(), Player.HintSearchDepth);
+      gameController.StockfishMananger.StartSearch(gettingHintFor.FENFull, Player.HintSearchDepth);
     }
   }
 

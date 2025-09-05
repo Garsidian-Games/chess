@@ -167,7 +167,7 @@ public class Opponent : MonoBehaviour {
 
     // 2. Get current FEN from your game state
     GameState gameState = gameController.GameManager.GameState;
-    string fen = gameState.ToFEN(); // Assuming you have this. If not, I can help write it.
+    string fen = gameState.FENFull; // Assuming you have this. If not, I can help write it.
 
     gameController.StockfishMananger.StartSearch(fen, DepthStep * DepthPerStep);
 
@@ -196,7 +196,7 @@ public class Opponent : MonoBehaviour {
   private void Update() {
     if (!IsUnlocked) return;
     if (player.IsTurnToMove) return;
-    if (gameController.GameManager.GameState.IsMate) return;
+    if (gameController.GameManager.GameState.GameOver) return;
     if (IsThinking) return;
 
     StartThinking();
