@@ -41,6 +41,7 @@ public class UIController : MonoBehaviour {
     public RecoverGameModal recoverGame;
     public ResetGameModal resetGame;
     public PickPromotionModal pickPromotion;
+    public RevertToMoveModal revertToMove;
     public GameOverModal gameOver;
   }
 
@@ -57,6 +58,16 @@ public class UIController : MonoBehaviour {
   public class Screen {
     public LoadingScreen loading;
   }
+
+  private class RevertToMove {
+    public int index;
+    public SideType sideType;
+
+    public RevertToMove(int index, SideType sideType) {
+      this.index = index;
+      this.sideType = sideType;
+    }
+  } 
 
   #endregion
 
@@ -90,6 +101,8 @@ public class UIController : MonoBehaviour {
   private GameState gettingHintFor;
 
   private bool useMoveTimer;
+
+  private RevertToMove pendingRevert;
 
   #endregion
 
@@ -327,7 +340,22 @@ public class UIController : MonoBehaviour {
     SyncMoveTimer();
   }
 
-  private void HandleScoreClicked(int index, SideType sideType) => gameController.GameManager.RevertTo(index, sideType);
+  private void HandleScoreClicked(int index, SideType sideType) {
+    pendingRevert = new(index, sideType);
+    modal.revertToMove.Show();
+  }
+
+  private void HandleRevertToMove() {
+    if (pendingRevert == null) throw new System.InvalidOperationException("No pending revert!");
+
+    modal.revertToMove.Hide();
+
+    int index = pendingRevert.index;
+    var sideType = pendingRevert.sideType;
+    pendingRevert = null;
+
+    gameController.GameManager.RevertTo(index, sideType);
+  }
 
   #endregion
 
@@ -372,6 +400,7 @@ public class UIController : MonoBehaviour {
     Bind(modal.recoverGame);
     Bind(modal.resetGame);
     Bind(modal.pickPromotion);
+    Bind(modal.revertToMove);
     Bind(modal.gameOver);
   }
 
@@ -422,6 +451,12 @@ public class UIController : MonoBehaviour {
     recoverGameModal.OnHidden.AddListener(HandleDisplayToggleHidden);
     recoverGameModal.OnCleared.AddListener(HandleClearSave);
     recoverGameModal.OnLoaded.AddListener(HandleLoadSave);
+  }
+
+  private void Bind(RevertToMoveModal revertToMoveModal) {
+     Bind(revertToMoveModal as UIModal);
+    revertToMoveModal.OnResume.AddListener(revertToMoveModal.Hide);
+    revertToMoveModal.OnRevert.AddListener(HandleRevertToMove);
   }
 
   private void Bind(BaseResetGameModal baseResetGameModal) {
