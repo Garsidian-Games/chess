@@ -91,8 +91,10 @@ echo "Compiling bridge_android.cpp"
 
 # --- Link shared lib (.so) ---
 echo "Linking libstockfish_unity.so"
-$CXX -shared -o "$OUT/libstockfish_unity.so" $(find "$OUT" -name '*.o' -print) \
-    -static-libstdc++ -lm -llog
+#$CXX -shared -o "$OUT/libstockfish_unity.so" $(find "$OUT" -name '*.o' -print) \
+#    -static-libstdc++ -lm -llog
+$CXX -shared -o "$OUT/libstockfish_unity.so" $(find "$OUT" -name '*.o') \
+     -Wl,-z,max-page-size=16384 -static-libstdc++ -lm -llog
 
 echo "Built: $OUT/libstockfish_unity.so"
 $NM -C --defined-only "$OUT/libstockfish_unity.so" | grep -E '_stockfish_(start|stop|send|read_copy)$' || true

@@ -61,13 +61,18 @@ public sealed class DragFromView : MovesView {
       opts.PulsePiece = true;
       opts.PieceVisible = false;
       opts.PieceBorderColor = player.BorderColorPlayer;
-    } else if (moves.Any(move => move.To == square)) {
-      bool isHint = ApplicableHint && viewState.Hint.To == square;
+    } else {
+      var move = moves.FirstOrDefault(move => move.To == square);
+      if (move != null) {
+        bool isHint = ApplicableHint && viewState.Hint.To == square;
 
-      opts.BorderColor = isHint ? player.BorderColorInspected : player.BorderColorPlayer;
-      opts.PieceBorderColor = player.BorderColorOpponent;
-      opts.PulsePiece = true;
-    } else return null;
+        opts.TextVisible = !move.IsCapture;
+        opts.CenterTextOpacity = 1f;
+        opts.BorderColor = isHint ? player.BorderColorInspected : player.BorderColorPlayer;
+        opts.PieceBorderColor = player.BorderColorOpponent;
+        opts.PulsePiece = true;
+      } else return null;
+    }
 
     return new(opts);
   }

@@ -10,6 +10,8 @@ public abstract class MovesView : PieceView {
 
   protected readonly Move[] moves;
 
+  protected virtual float CenterTextOpacity => 0.5f;
+
   #endregion
 
   #region Methods
@@ -23,7 +25,10 @@ public abstract class MovesView : PieceView {
 
   protected SquareState.SquareStateOptions MoveOptionsFor(Square square) {
     var opts = StandardOptionsFor(square, false);
-    if (moves.Any(m => m.To == square)) {
+    var move = moves.FirstOrDefault(m => m.To == square);
+    if (move != null) {
+      opts.TextVisible = !move.IsCapture;
+      opts.CenterTextOpacity = CenterTextOpacity;
       opts.PieceBorderColor = player.BorderColorOpponent;
       opts.TremblePiece = true;
     } else opts.ScreenVisible = true;

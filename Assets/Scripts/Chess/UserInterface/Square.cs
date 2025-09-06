@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using TMPro;
 
 [RequireComponent(typeof(Image))]
 public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IEndDragHandler, IPointerEnterHandler, IPointerExitHandler, IDragHandler, IDropHandler {
@@ -24,6 +25,13 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
   }
 
   [System.Serializable]
+  public class Text {
+    public TextMeshProUGUI topLeft;
+    public TextMeshProUGUI center;
+    public TextMeshProUGUI bottomRight;
+  }
+
+  [System.Serializable]
   public class PieceDisplay {
     public Wobble wobble;
     public PulseScale pulse;
@@ -41,16 +49,14 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
 
   [SerializeField] private Coverage coverage;
   [SerializeField] private Image highlight;
-  [SerializeField] private Image target;
   [SerializeField] private Image border;
   [SerializeField] private PieceDisplay pieceDisplay;
   [SerializeField] private Image screen;
+  [SerializeField] private Text text;
 
   private Image image;
 
   private int? index;
-  private float? playerCoverageOpacity;
-  private float? opponentCoverageOpacity;
 
   private Sprite defaultPieceIcon;
   private Sprite defaultPieceBorder;
@@ -90,92 +96,13 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
 
   public char FileChar => FileIndexToChar(File);
 
-  public bool HighlightVisible {
-    get => highlight.enabled;
-    set => highlight.enabled = value;
-  }
-
-  public bool PieceVisible {
-    get => pieceDisplay.icon.enabled;
-    set => pieceDisplay.icon.enabled = value;
-  }
-
-  public Color BorderColor {
-    get => border.color;
-    set {
-      border.color = value;
-      BorderVisible = true;
-    }
-  }
-
-  public bool BorderVisible {
-    get => border.enabled;
-    set => border.enabled = value;
-  }
-
-  public bool ScreenVisible {
-    get => screen.enabled;
-    set => screen.enabled = value;
-  }
-
-  public float OpponentCoverageOpacity {
-    get => opponentCoverageOpacity.Value;
-    set => SetCoverageOpacity(ref opponentCoverageOpacity, value, coverage.opponent);
-  }
-
-  public float PlayerCoverageOpacity {
-    get => playerCoverageOpacity.Value;
-    set => SetCoverageOpacity(ref playerCoverageOpacity, value, coverage.player);
-  }
-
-  public Piece PieceBorder {
-    set => pieceDisplay.border.sprite = value == null ? (piece == null ? defaultPieceBorder : piece.Border) : value.Border;
-  }
-
   public Piece Piece {
     get => piece;
     set {
       piece = value;
       pieceDisplay.icon.sprite = piece == null ? defaultPieceIcon : piece.Icon;
       pieceDisplay.border.sprite = piece == null ? defaultPieceBorder : piece.Border;
-      PieceVisible = true;
-      ResetPieceBorderColor();
     }
-  }
-
-  public Color PieceBorderColor {
-    get => pieceDisplay.border.color;
-    set => pieceDisplay.border.color = value;
-  }
-
-  public bool WobblePiece {
-    get => pieceDisplay.wobble.enabled;
-    set => pieceDisplay.wobble.enabled = value;
-  }
-
-  public bool PulsePiece {
-    get => pieceDisplay.pulse.enabled;
-    set => pieceDisplay.pulse.enabled = value;
-  }
-
-  public bool TremblePiece {
-    get => pieceDisplay.tremble.enabled;
-    set => pieceDisplay.tremble.enabled = value;
-  }
-
-  public bool GreenAlert {
-    get => pieceDisplay.alertGreen.enabled;
-    set => pieceDisplay.alertGreen.enabled = value;
-  }
-
-  public bool RedAlert {
-    get => pieceDisplay.alertRed.enabled;
-    set => pieceDisplay.alertRed.enabled = value;
-  }
-
-  public bool BlockedAlert {
-    get => pieceDisplay.alertBlocked.enabled;
-    set => pieceDisplay.alertBlocked.enabled = value;
   }
 
   #endregion
@@ -192,35 +119,40 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
   public void Apply(SquareState state) {
     applied = state;
 
-    PieceBorder = state.PieceBorder;
+    SetImageColorOpacity(coverage.opponent, state.OpponentCoverageOpacity);
+    SetImageColorOpacity(coverage.player, state.PlayerCoverageOpacity);
+    SetTextColorOpacity(text.center, state.CenterTextOpacity);
 
-    if (state.BorderColor.HasValue) BorderColor = state.BorderColor.Value;
-    if (state.PieceBorderColor.HasValue) PieceBorderColor = state.PieceBorderColor.Value;
-    else ResetPieceBorderColor();
+    if (state.BorderColor.HasValue) border.color = state.BorderColor.Value;
+    pieceDisplay.border.color = state.PieceBorderColor ?? defaultPieceBorderColor;
 
-    HighlightVisible = state.HighlightVisible;
-    BorderVisible = state.BorderVisible;
-    ScreenVisible = state.ScreenVisible;
-    OpponentCoverageOpacity = state.OpponentCoverageOpacity;
-    PlayerCoverageOpacity = state.PlayerCoverageOpacity;
-    WobblePiece = state.WobblePiece;
-    PulsePiece = state.PulsePiece;
-    TremblePiece = state.TremblePiece;
-    GreenAlert = state.GreenAlert;
-    RedAlert = state.RedAlert;
-    BlockedAlert = state.BlockedAlert;
-    PieceVisible = state.PieceVisible;
+    highlight.enabled = state.HighlightVisible;
+    border.enabled = state.BorderVisible;
+    screen.enabled = state.ScreenVisible;
+    text.center.enabled = state.TextVisible;
+
+    pieceDisplay.wobble.enabled = state.WobblePiece;
+    pieceDisplay.pulse.enabled = state.PulsePiece;
+    pieceDisplay.tremble.enabled = state.TremblePiece;
+    pieceDisplay.alertGreen.enabled = state.GreenAlert;
+    pieceDisplay.alertRed.enabled = state.RedAlert;
+    pieceDisplay.alertBlocked.enabled = state.BlockedAlert;
+    pieceDisplay.icon.enabled = state.PieceVisible;
+    pieceDisplay.border.sprite = state.PieceBorder == null ? (piece == null ? defaultPieceBorder : piece.Border) : state.PieceBorder.Border;
   }
-
-  public void ResetPieceBorderColor() => PieceBorderColor = defaultPieceBorderColor;
 
   public override string ToString() => $"{FileChar}{Rank + 1}";
 
-  private void SetCoverageOpacity(ref float? opacity, float value, Image image) {
-    opacity = Mathf.Clamp01(value);
+  private void SetImageColorOpacity(Image image, float value) {
     var color = image.color;
-    color.a = opacity.Value;
+    color.a = Mathf.Clamp01(value);
     image.color = color;
+  }
+
+  private void SetTextColorOpacity(TextMeshProUGUI text, float value) {
+    var color = text.color;
+    color.a = Mathf.Clamp01(value);
+    text.color = color;
   }
 
   #endregion
@@ -251,11 +183,9 @@ public class Square : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IE
 
   private void Start() {
     image.color = IsWhite ? White : Black;
-    HighlightVisible = false;
-    BorderVisible = false;
-    ScreenVisible = false;
-    if (!opponentCoverageOpacity.HasValue) OpponentCoverageOpacity = 0f;
-    if (!playerCoverageOpacity.HasValue) PlayerCoverageOpacity = 0f;
+    if (File == 0) text.topLeft.text = $"{Rank + 1}";
+    text.center.text = name;
+    if (Rank == 0) text.bottomRight.text = $"{FileChar}";
   }
 
   private void Awake() {

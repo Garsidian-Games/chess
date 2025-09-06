@@ -8,6 +8,8 @@ public sealed class MovesFromView : MovesView {
 
   #region Properties
 
+  protected override float CenterTextOpacity => 1f;
+
   #endregion
 
   #region Methods
